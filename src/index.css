@@ -60,9 +60,24 @@ body {
 .sidebar-nav::-webkit-scrollbar-thumb { background: transparent; }
 .sidebar-nav:hover::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-/* Modal scroll */
-.modal-scroll::-webkit-scrollbar { width: 4px; }
-.modal-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* Modal scroll overrides (hide scrollbars) */
+.modal-scroll::-webkit-scrollbar { width: 0; height: 0; }
+.modal-scroll { scrollbar-width: none; }
+
+/* Hide scrollbars completely in modals/dialogs */
+[role="dialog"], 
+[role="dialog"] *,
+.fixed.inset-0.overflow-y-auto {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+[role="dialog"]::-webkit-scrollbar, 
+[role="dialog"] *::-webkit-scrollbar,
+.fixed.inset-0.overflow-y-auto::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
 
 /* Animations */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
