@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button, Card, Spinner, Badge, Modal, Input, Select } from '../../components/ui'
 import { applicantService, ppdbService } from '../../services/index'
 import { useToast } from '../../components/Toast'
-import { Eye } from 'lucide-react'
+import { Eye, ArrowRight } from 'lucide-react'
 
 const STATUS_LABEL: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default'; label: string }> = {
   registered: { variant: 'warning', label: 'Terdaftar' },
@@ -14,7 +14,10 @@ const STATUS_LABEL: Record<string, { variant: 'warning' | 'success' | 'danger' |
   payment_verified: { variant: 'success', label: 'Pembayaran Terverifikasi' },
   accepted: { variant: 'success', label: 'Diterima' },
   rejected: { variant: 'danger', label: 'Ditolak' },
+  waiting_list: { variant: 'warning', label: 'Daftar Tunggu' },
 }
+
+const STATUS_OPTIONS = Object.entries(STATUS_LABEL).map(([value, s]) => ({ value, label: s.label }))
 
 export default function AdminApplicantsPage() {
   const [data, setData] = useState<any[]>([])
@@ -27,6 +30,9 @@ export default function AdminApplicantsPage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [detail, setDetail] = useState<any>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [newStatus, setNewStatus] = useState('')
+  const [statusNotes, setStatusNotes] = useState('')
+  const [statusSubmitting, setStatusSubmitting] = useState(false)
   const { toast } = useToast()
   const PER_PAGE = 20
 
@@ -49,12 +55,29 @@ export default function AdminApplicantsPage() {
   async function openDetail(id: string) {
     setDetailLoading(true)
     setDetailOpen(true)
-    try { setDetail(await applicantService.getApplicantDetail(id)) }
-    catch { toast('error', 'Gagal memuat detail') }
+    try {
+      const d = await applicantService.getApplicantDetail(id)
+      setDetail(d)
+      setNewStatus(d.status || '')
+      setStatusNotes('')
+    } catch { toast('error', 'Gagal memuat detail') }
     finally { setDetailLoading(false) }
   }
 
   function handleSearch() { setPage(1); load() }
+
+  async function handleStatusChange() {
+    if (!detail || !newStatus) return
+    setStatusSubmitting(true)
+    try {
+      await applicantService.updateApplicantStatus(detail.id, { status: newStatus, notes: statusNotes })
+      toast('success', 'Status berhasil diubah')
+      setDetailOpen(false)
+      setDetail(null)
+      load()
+    } catch { toast('error', 'Gagal mengubah status') }
+    finally { setStatusSubmitting(false) }
+  }
 
   const totalPages = Math.ceil(total / PER_PAGE)
   const periodOptions = periods.map((p: any) => ({ value: p.id, label: p.name }))
@@ -148,6 +171,16 @@ export default function AdminApplicantsPage() {
                   <div><label className="text-xs text-[var(--text-muted)]">Alamat</label><p className="text-sm">{detail.profile.address || '—'}</p></div>
                   <div><label className="text-xs text-[var(--text-muted)]">Sekolah Asal</label><p className="text-sm">{detail.profile.previous_school || '—'}</p></div>
                 </div>
+              </div>
+            )}
+            {detail.status && (
+              <div className="border-t pt-3 space-y-3">
+                <h4 className="font-semibold text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4" /> Ubah Status</h4>
+                <Select value={newStatus} onChange={e => setNewStatus(e.target.value)} options={STATUS_OPTIONS} className="w-full" />
+                <Input placeholder="Catatan (opsional)" value={statusNotes} onChange={e => setStatusNotes(e.target.value)} />
+                <Button onClick={handleStatusChange} disabled={!newStatus || statusSubmitting || newStatus === detail.status}>
+                  {statusSubmitting ? <><Spinner size="sm" /> Menyimpan...</> : 'Simpan Status'}
+                </Button>
               </div>
             )}
           </div>

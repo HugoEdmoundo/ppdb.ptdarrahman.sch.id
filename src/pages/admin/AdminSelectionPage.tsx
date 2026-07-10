@@ -3,11 +3,13 @@ import { useLocation } from 'react-router-dom'
 import { Button, Card, Spinner, Badge, Modal, Input, Select } from '../../components/ui'
 import { selectionService } from '../../services/index'
 import { useToast } from '../../components/Toast'
-import { Plus, Pencil, Trash2, Calendar, GraduationCap, ClipboardList, Trophy, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, Calendar, GraduationCap, ClipboardList, Trophy, CheckCircle, XCircle, FileCheck } from 'lucide-react'
 
-type Tab = 'sessions' | 'results' | 'graduations'
+type Tab = 'test-types' | 'parameters' | 'sessions' | 'results' | 'graduations'
 
 function tabFromPath(path: string): Tab {
+  if (path.includes('/test-types')) return 'test-types'
+  if (path.includes('/parameters')) return 'parameters'
   if (path.includes('/test-scores')) return 'results'
   if (path.includes('/graduations')) return 'graduations'
   return 'sessions'
@@ -25,6 +27,8 @@ export default function AdminSelectionPage() {
       </div>
       <div className="flex gap-1 bg-white/50 rounded-xl p-1 border border-[var(--border)] w-fit">
         {[
+          { key: 'test-types', label: 'Tipe Tes', icon: FileCheck },
+          { key: 'parameters', label: 'Parameter', icon: ClipboardList },
           { key: 'sessions', label: 'Sesi Tes', icon: Calendar },
           { key: 'results', label: 'Hasil & Nilai', icon: ClipboardList },
           { key: 'graduations', label: 'Kelulusan', icon: Trophy },
@@ -35,8 +39,182 @@ export default function AdminSelectionPage() {
           </button>
         ))}
       </div>
-      {tab === 'sessions' ? <SessionTab /> : tab === 'results' ? <ResultTab /> : <GraduationTab />}
+      {tab === 'test-types' ? <TestTypeTab /> : tab === 'parameters' ? <ParameterTab /> : tab === 'sessions' ? <SessionTab /> : tab === 'results' ? <ResultTab /> : <GraduationTab />}
     </div>
+  )
+}
+
+function TestTypeTab() {
+  const [data, setData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [form, setForm] = useState({ code: '', name: '', description: '', is_active: true })
+  const [saving, setSaving] = useState(false)
+  const { toast } = useToast()
+
+  useEffect(() => { load() }, [])
+
+  async function load() {
+    setLoading(true)
+    try { const r = await selectionService.getTestTypes(); setData(Array.isArray(r) ? r : []) }
+    catch { toast('error', 'Gagal memuat') }
+    finally { setLoading(false) }
+  }
+
+  function openCreate() { setEditId(null); setForm({ code: '', name: '', description: '', is_active: true }); setModalOpen(true) }
+  function openEdit(item: any) { setEditId(item.id); setForm({ code: item.code || '', name: item.name || '', description: item.description || '', is_active: item.is_active ?? true }); setModalOpen(true) }
+
+  async function handleSave() {
+    if (!form.code || !form.name) return toast('warning', 'Lengkapi field wajib')
+    setSaving(true)
+    try {
+      if (editId) { await selectionService.updateTestType(editId, form); toast('success', 'Tipe tes diperbarui') }
+      else { await selectionService.createTestType(form); toast('success', 'Tipe tes dibuat') }
+      setModalOpen(false); load()
+    } catch (e: any) { toast('error', e.message) } finally { setSaving(false) }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Hapus tipe tes ini?')) return
+    try { await selectionService.deleteTestType(id); toast('success', 'Tipe tes dihapus'); load() }
+    catch (e: any) { toast('error', e.message) }
+  }
+
+  if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
+
+  return (
+    <>
+      <div className="flex justify-end"><Button onClick={openCreate}><Plus className="w-4 h-4" /> Tambah Tipe Tes</Button></div>
+      {data.length === 0 ? (
+        <Card className="p-12 text-center text-[var(--text-muted)]">Belum ada tipe tes.</Card>
+      ) : (
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[var(--border)] overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-[var(--accent-subtle)] border-b">
+              <tr><th className="text-left px-5 py-3 font-semibold">Kode</th><th className="text-left px-5 py-3 font-semibold">Nama</th><th className="text-left px-5 py-3 font-semibold">Deskripsi</th><th className="text-left px-5 py-3 font-semibold">Status</th><th className="text-right px-5 py-3 font-semibold">Aksi</th></tr>
+            </thead>
+            <tbody>
+              {data.map((item: any) => (
+                <tr key={item.id} className="border-b hover:bg-white/40">
+                  <td className="px-5 py-3 font-mono text-xs">{item.code}</td>
+                  <td className="px-5 py-3 font-medium">{item.name}</td>
+                  <td className="px-5 py-3 text-xs text-[var(--text-muted)]">{item.description || '—'}</td>
+                  <td className="px-5 py-3"><Badge variant={item.is_active ? 'success' : 'default'}>{item.is_active ? 'Aktif' : 'Nonaktif'}</Badge></td>
+                  <td className="px-5 py-3 text-right"><div className="flex justify-end gap-1"><Button size="sm" variant="ghost" onClick={() => openEdit(item)}><Pencil className="w-4 h-4" /></Button><Button size="sm" variant="ghost" onClick={() => handleDelete(item.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Edit Tipe Tes' : 'Tambah Tipe Tes'}
+        footer={<div className="flex gap-2 justify-end"><Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button><Button loading={saving} onClick={handleSave}>Simpan</Button></div>}>
+        <div className="space-y-4">
+          <Input label="Kode *" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="TIK" />
+          <Input label="Nama *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Tes Iq" />
+          <Input label="Deskripsi" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Deskripsi singkat" />
+          <Select label="Status" value={form.is_active ? 'true' : 'false'} onChange={e => setForm({ ...form, is_active: e.target.value === 'true' })} options={[{ value: 'true', label: 'Aktif' }, { value: 'false', label: 'Nonaktif' }]} />
+        </div>
+      </Modal>
+    </>
+  )
+}
+
+function ParameterTab() {
+  const [data, setData] = useState<any[]>([])
+  const [testTypes, setTestTypes] = useState<any[]>([])
+  const [filterType, setFilterType] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [form, setForm] = useState({ test_type_id: '', name: '', weight: '', min_score: '', max_score: '', passing_score: '', sort_order: '' })
+  const [saving, setSaving] = useState(false)
+  const { toast } = useToast()
+
+  useEffect(() => { selectionService.getTestTypes().then(setTestTypes).catch(() => {}) }, [])
+  useEffect(() => { load() }, [filterType])
+
+  async function load() {
+    setLoading(true)
+    try { const r = await selectionService.getParameters(filterType || undefined); setData(Array.isArray(r) ? r : []) }
+    catch { toast('error', 'Gagal memuat') }
+    finally { setLoading(false) }
+  }
+
+  function openCreate() { setEditId(null); setForm({ test_type_id: testTypes[0]?.id || '', name: '', weight: '', min_score: '', max_score: '', passing_score: '', sort_order: '' }); setModalOpen(true) }
+  function openEdit(item: any) { setEditId(item.id); setForm({ test_type_id: item.test_type_id || '', name: item.name || '', weight: String(item.weight ?? ''), min_score: String(item.min_score ?? ''), max_score: String(item.max_score ?? ''), passing_score: String(item.passing_score ?? ''), sort_order: String(item.sort_order ?? '') }); setModalOpen(true) }
+
+  async function handleSave() {
+    if (!form.test_type_id || !form.name) return toast('warning', 'Lengkapi field wajib')
+    setSaving(true)
+    try {
+      const payload = { ...form, weight: form.weight ? Number(form.weight) : null, min_score: form.min_score ? Number(form.min_score) : null, max_score: form.max_score ? Number(form.max_score) : null, passing_score: form.passing_score ? Number(form.passing_score) : null, sort_order: form.sort_order ? Number(form.sort_order) : 0 }
+      if (editId) { await selectionService.updateParameter(editId, payload); toast('success', 'Parameter diperbarui') }
+      else { await selectionService.createParameter(payload); toast('success', 'Parameter dibuat') }
+      setModalOpen(false); load()
+    } catch (e: any) { toast('error', e.message) } finally { setSaving(false) }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Hapus parameter ini?')) return
+    try { await selectionService.deleteParameter(id); toast('success', 'Parameter dihapus'); load() }
+    catch (e: any) { toast('error', e.message) }
+  }
+
+  const ttOptions = testTypes.map((t: any) => ({ value: t.id, label: t.name }))
+  const filterOptions = [{ value: '', label: 'Semua' }, ...ttOptions]
+
+  if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
+
+  return (
+    <>
+      <div className="flex justify-between items-center">
+        <Select value={filterType} onChange={e => setFilterType(e.target.value)} options={filterOptions} />
+        <Button onClick={openCreate}><Plus className="w-4 h-4" /> Tambah Parameter</Button>
+      </div>
+      {data.length === 0 ? (
+        <Card className="p-12 text-center text-[var(--text-muted)]">Belum ada parameter.</Card>
+      ) : (
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[var(--border)] overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-[var(--accent-subtle)] border-b">
+              <tr><th className="text-left px-5 py-3 font-semibold">Nama</th><th className="text-left px-5 py-3 font-semibold">Tipe Tes</th><th className="text-left px-5 py-3 font-semibold">Bobot</th><th className="text-left px-5 py-3 font-semibold">Skor Min</th><th className="text-left px-5 py-3 font-semibold">Skor Max</th><th className="text-left px-5 py-3 font-semibold">Passing Score</th><th className="text-left px-5 py-3 font-semibold">Urutan</th><th className="text-right px-5 py-3 font-semibold">Aksi</th></tr>
+            </thead>
+            <tbody>
+              {data.map((item: any) => (
+                <tr key={item.id} className="border-b hover:bg-white/40">
+                  <td className="px-5 py-3 font-medium">{item.name}</td>
+                  <td className="px-5 py-3 text-xs">{item.test_type?.name || '—'}</td>
+                  <td className="px-5 py-3 text-xs">{item.weight ?? '—'}</td>
+                  <td className="px-5 py-3 text-xs">{item.min_score ?? '—'}</td>
+                  <td className="px-5 py-3 text-xs">{item.max_score ?? '—'}</td>
+                  <td className="px-5 py-3 text-xs">{item.passing_score ?? '—'}</td>
+                  <td className="px-5 py-3 text-xs">{item.sort_order ?? '—'}</td>
+                  <td className="px-5 py-3 text-right"><div className="flex justify-end gap-1"><Button size="sm" variant="ghost" onClick={() => openEdit(item)}><Pencil className="w-4 h-4" /></Button><Button size="sm" variant="ghost" onClick={() => handleDelete(item.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Edit Parameter' : 'Tambah Parameter'}
+        footer={<div className="flex gap-2 justify-end"><Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button><Button loading={saving} onClick={handleSave}>Simpan</Button></div>}>
+        <div className="space-y-4">
+          <Select label="Tipe Tes *" value={form.test_type_id} onChange={e => setForm({ ...form, test_type_id: e.target.value })} options={ttOptions} />
+          <Input label="Nama *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Parameter name" />
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Bobot" type="number" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} />
+            <Input label="Urutan" type="number" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Input label="Skor Min" type="number" value={form.min_score} onChange={e => setForm({ ...form, min_score: e.target.value })} />
+            <Input label="Skor Max" type="number" value={form.max_score} onChange={e => setForm({ ...form, max_score: e.target.value })} />
+            <Input label="Passing Score" type="number" value={form.passing_score} onChange={e => setForm({ ...form, passing_score: e.target.value })} />
+          </div>
+        </div>
+      </Modal>
+    </>
   )
 }
 
@@ -76,7 +254,11 @@ function SessionTab() {
     } catch (e: any) { toast('error', e.message) } finally { setSaving(false) }
   }
 
-  async function handleDelete() { if (!confirm('Hapus sesi tes ini?')) return; toast('warning', 'Delete via API belum tersedia'); load() }
+  async function handleDelete(id: string) {
+    if (!confirm('Hapus sesi tes ini?')) return
+    try { await selectionService.deleteSession(id); toast('success', 'Sesi dihapus'); load() }
+    catch (e: any) { toast('error', e.message) }
+  }
 
   const ttOptions = testTypes.map((t: any) => ({ value: t.id, label: t.name }))
   const totalPages = Math.ceil(total / PER_PAGE)
@@ -105,7 +287,7 @@ function SessionTab() {
                   <td className="px-5 py-3 text-xs">{s.location || '—'}</td>
                   <td className="px-5 py-3">{s.capacity}</td>
                   <td className="px-5 py-3"><Badge variant={s.status === 'scheduled' ? 'warning' : s.status === 'completed' ? 'success' : 'default'}>{s.status}</Badge></td>
-                  <td className="px-5 py-3 text-right"><div className="flex justify-end gap-1"><Button size="sm" variant="ghost" onClick={() => openEdit(s)}><Pencil className="w-4 h-4" /></Button><Button size="sm" variant="ghost" onClick={() => handleDelete()}><Trash2 className="w-4 h-4 text-red-500" /></Button></div></td>
+                  <td className="px-5 py-3 text-right"><div className="flex justify-end gap-1"><Button size="sm" variant="ghost" onClick={() => openEdit(s)}><Pencil className="w-4 h-4" /></Button><Button size="sm" variant="ghost" onClick={() => handleDelete(s.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -266,6 +448,7 @@ function GraduationTab() {
   const [saving, setSaving] = useState(false)
   const [ruleModal, setRuleModal] = useState(false)
   const [rules, setRules] = useState<any[]>([])
+  const [editRuleId, setEditRuleId] = useState<string | null>(null)
   const [ruleForm, setRuleForm] = useState({ wave_config_id: '', rule_type: 'pass_all', min_total_score: '', must_pass_all_tests: true, description: '', is_active: true })
   const { toast } = useToast()
   const PER_PAGE = 20
@@ -295,11 +478,24 @@ function GraduationTab() {
     } catch (e: any) { toast('error', e.message) } finally { setSaving(false) }
   }
 
+  function openCreateRule() { setEditRuleId(null); setRuleForm({ wave_config_id: '', rule_type: 'pass_all', min_total_score: '', must_pass_all_tests: true, description: '', is_active: true }); setRuleModal(true) }
+  function openEditRule(rule: any) { setEditRuleId(rule.id); setRuleForm({ wave_config_id: rule.wave_config_id || '', rule_type: rule.rule_type || 'pass_all', min_total_score: String(rule.min_total_score ?? ''), must_pass_all_tests: rule.must_pass_all_tests ?? true, description: rule.description || '', is_active: rule.is_active ?? true }); setRuleModal(true) }
+
   async function handleSaveRule() {
     if (!ruleForm.wave_config_id) return toast('warning', 'Wave config wajib')
     setSaving(true)
-    try { await selectionService.createGraduationRule(ruleForm); toast('success', 'Aturan disimpan'); setRuleModal(false); loadRules() }
-    catch (e: any) { toast('error', e.message) } finally { setSaving(false) }
+    try {
+      const payload = { ...ruleForm, min_total_score: ruleForm.min_total_score ? Number(ruleForm.min_total_score) : null }
+      if (editRuleId) { await selectionService.updateGraduationRule(editRuleId, payload); toast('success', 'Aturan diperbarui') }
+      else { await selectionService.createGraduationRule(payload); toast('success', 'Aturan disimpan') }
+      setRuleModal(false); loadRules()
+    } catch (e: any) { toast('error', e.message) } finally { setSaving(false) }
+  }
+
+  async function handleDeleteRule(id: string) {
+    if (!confirm('Hapus aturan kelulusan ini?')) return
+    try { await selectionService.deleteGraduationRule(id); toast('success', 'Aturan dihapus'); loadRules() }
+    catch (e: any) { toast('error', e.message) }
   }
 
   const totalPages = Math.ceil(total / PER_PAGE)
@@ -309,7 +505,7 @@ function GraduationTab() {
   return (
     <>
       <div className="flex justify-between items-center gap-3">
-        <Button variant="outline" onClick={() => setRuleModal(true)}><GraduationCap className="w-4 h-4" /> Aturan Kelulusan</Button>
+        <Button variant="outline" onClick={openCreateRule}><GraduationCap className="w-4 h-4" /> Aturan Kelulusan</Button>
         <Button onClick={openGraduate}><Trophy className="w-4 h-4" /> Set Kelulusan</Button>
       </div>
       {(!Array.isArray(data) || data.length === 0) ? (
@@ -355,8 +551,8 @@ function GraduationTab() {
           <Input label="Catatan" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
         </div>
       </Modal>
-      <Modal isOpen={ruleModal} onClose={() => setRuleModal(false)} title="Aturan Kelulusan"
-        footer={<div className="flex gap-2 justify-end"><Button variant="outline" onClick={() => setRuleModal(false)}>Batal</Button><Button loading={saving} onClick={handleSaveRule}>Tambah</Button></div>}>
+      <Modal isOpen={ruleModal} onClose={() => setRuleModal(false)} title={editRuleId ? 'Edit Aturan Kelulusan' : 'Aturan Kelulusan'}
+        footer={<div className="flex gap-2 justify-end"><Button variant="outline" onClick={() => setRuleModal(false)}>Batal</Button><Button loading={saving} onClick={handleSaveRule}>{editRuleId ? 'Simpan' : 'Tambah'}</Button></div>}>
         <div className="space-y-4">
           <Input label="Wave Config ID" value={ruleForm.wave_config_id} onChange={e => setRuleForm({ ...ruleForm, wave_config_id: e.target.value })} placeholder="UUID wave config" />
           <Select label="Tipe Aturan" value={ruleForm.rule_type} onChange={e => setRuleForm({ ...ruleForm, rule_type: e.target.value })} options={[{ value: 'pass_all', label: 'Lulus Semua Tes' }, { value: 'min_score', label: 'Skor Minimal' }, { value: 'ranking', label: 'Peringkat' }]} />
@@ -369,10 +565,13 @@ function GraduationTab() {
           <h3 className="font-semibold text-sm mb-2">Aturan yang Ada</h3>
           <div className="space-y-1">
             {rules.map((r: any) => (
-              <div key={r.id} className="flex items-center gap-2 text-xs">
-                <Badge variant={r.is_active ? 'success' : 'default'}>{r.rule_type}</Badge>
-                <span className="text-[var(--text-muted)]">{r.description || '—'}</span>
-                {r.min_total_score && <span className="text-[var(--text-muted)]">Min: {r.min_total_score}</span>}
+              <div key={r.id} className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <Badge variant={r.is_active ? 'success' : 'default'}>{r.rule_type}</Badge>
+                  <span className="text-[var(--text-muted)]">{r.description || '—'}</span>
+                  {r.min_total_score && <span className="text-[var(--text-muted)]">Min: {r.min_total_score}</span>}
+                </div>
+                <div className="flex gap-1"><Button size="sm" variant="ghost" onClick={() => openEditRule(r)}><Pencil className="w-4 h-4" /></Button><Button size="sm" variant="ghost" onClick={() => handleDeleteRule(r.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button></div>
               </div>
             ))}
           </div>

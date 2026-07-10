@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, Spinner, Button } from '../../components/ui'
 import { dashboardService } from '../../services/index'
 import { useToast } from '../../components/Toast'
+import { getToken, API_BASE } from '../../api/client'
 import { Download, Users, CreditCard, GraduationCap, FileCheck, TrendingUp } from 'lucide-react'
 
 const REPORT_TYPES = [
@@ -25,12 +26,30 @@ export default function AdminReportsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  function handleExport(type: string) {
+  async function handleExport(type: string) {
+    const url = dashboardService.exportReport(type)
     setGenerating(type)
-    setTimeout(() => {
+    try {
+      const token = getToken()
+      const res = await fetch(`${API_BASE}${url}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = `${type}_report.csv`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(objectUrl)
+      toast('success', `Export ${type} berhasil`)
+    } catch (err: any) {
+      toast('error', err?.message || 'Gagal mengunduh laporan')
+    } finally {
       setGenerating(null)
-      toast('warning', 'Export belum tersedia. API endpoint perlu ditambahkan.')
-    }, 1000)
+    }
   }
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>

@@ -3,6 +3,9 @@ import * as api from '../api/client'
 
 export interface AuthUser {
   id: string; username: string; email: string; full_name: string; role_id: string; user_type: string; is_active: boolean
+  permissions: Record<string, string>
+  is_superadmin: boolean
+  page_permissions: string[]
 }
 
 interface AuthContextType {
@@ -33,3 +36,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() { return useContext(AuthContext) }
+
+export function usePermission() {
+  const { user } = useAuth()
+  return {
+    hasModuleAccess: (module: string, level: 'dashboard' | 'read' | 'crud' = 'read') => {
+      if (!user) return false
+      if (user.is_superadmin) return true
+      const perm = user.permissions?.[module] || 'none'
+      const levels = { none: 0, dashboard: 1, read: 2, crud: 3 }
+      return (levels[perm as keyof typeof levels] || 0) >= levels[level]
+    },
+    isAdmin: () => {
+      if (!user) return false
+      if (user.is_superadmin) return true
+      const modules = ['ppdb', 'payment', 'selection', 'notification', 'dashboard']
+      return modules.some(m => (user.permissions?.[m] || 'none') !== 'none')
+    },
+    pagePermissions: user?.page_permissions || [],
+    permissions: user?.permissions || {},
+    isSuperadmin: user?.is_superadmin || false,
+  }
+}
+
+const PPDB_MODULES = ['ppdb', 'payment', 'selection', 'notification', 'dashboard']
+const PUBLIC_PREFIXES = ['/auth', '/', '/403', '/404']
+
+export function useFilteredNav(items: { label: string; href?: string; module?: string; minLevel?: 'dashboard' | 'read' | 'crud'; roles?: string[]; children?: { label: string; href: string; module?: string; minLevel?: 'dashboard' | 'read' | 'crud' }[] }[]) {
+  const { user } = useAuth()
+  const { permissions, isSuperadmin, pagePermissions } = usePermission()
+
+  if (!user) return items
+
+  return items.filter(item => {
+    if (item.roles && !item.roles.includes(user.user_type) && !isSuperadmin) return false
+
+    if (item.module) {
+      const minLevel = item.minLevel || 'dashboard'
+      const perm = permissions[item.module] || 'none'
+      const levels: Record<string, number> = { none: 0, dashboard: 1, read: 2, crud: 3 }
+      if ((levels[perm] || 0) < levels[minLevel]) return false
+    }
+
+    if (item.children) {
+      const filteredChildren = item.children.filter(c => {
+        if (pagePermissions.length > 0) {
+          const pageKey = c.href.replace('/admin/', '')
+          if (!pagePermissions.includes(pageKey)) return false
+        }
+        return true
+      })
+      if (filteredChildren.length === 0) return false
+    }
+
+    return true
+  })
+}

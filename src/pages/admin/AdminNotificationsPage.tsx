@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { Button, Card, Spinner, Badge, Modal, Input, Select } from '../../components/ui'
 import { notifService } from '../../services/index'
 import { useToast } from '../../components/Toast'
-import { Plus, Send, Bell, Calendar, Clock, Mail } from 'lucide-react'
+import { Plus, Send, Bell, Calendar, Clock, Mail, Pencil, Trash2 } from 'lucide-react'
 
 type Tab = 'templates' | 'send' | 'history' | 'calendar'
 
@@ -59,6 +59,7 @@ function TemplateTab() {
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState({ code: '', name: '', subject: '', body_template: '', channel: 'in_app' })
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
@@ -66,12 +67,24 @@ function TemplateTab() {
   useEffect(() => { load() }, [])
   async function load() { setLoading(true); try { setData(await notifService.getTemplates()) } catch { toast('error', 'Gagal memuat') } finally { setLoading(false) } }
 
-  function openCreate() { setForm({ code: '', name: '', subject: '', body_template: '', channel: 'in_app' }); setModalOpen(true) }
+  function openCreate() { setEditId(null); setForm({ code: '', name: '', subject: '', body_template: '', channel: 'in_app' }); setModalOpen(true) }
+
+  function openEdit(t: any) { setEditId(t.id); setForm({ code: t.code, name: t.name, subject: t.subject, body_template: t.body_template, channel: t.channel || 'in_app' }); setModalOpen(true) }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Hapus template ini?')) return
+    try { await notifService.deleteTemplate(id); toast('success', 'Template dihapus'); load() }
+    catch (e: any) { toast('error', e.message) }
+  }
 
   async function handleSave() {
     if (!form.code || !form.name || !form.subject || !form.body_template) return toast('warning', 'Lengkapi semua field')
     setSaving(true)
-    try { await notifService.createTemplate(form); toast('success', 'Template dibuat'); setModalOpen(false); load() }
+    try {
+      if (editId) { await notifService.updateTemplate(editId, form); toast('success', 'Template diperbarui') }
+      else { await notifService.createTemplate(form); toast('success', 'Template dibuat') }
+      setModalOpen(false); load()
+    }
     catch (e: any) { toast('error', e.message) } finally { setSaving(false) }
   }
 
@@ -85,7 +98,7 @@ function TemplateTab() {
           {data.map((t: any) => (
             <Card key={t.id} className="p-4">
               <div className="flex items-start justify-between">
-                <div>
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-mono text-xs font-semibold text-[var(--accent)]">{t.code}</span>
                     <Badge variant="default">{t.channel || 'in_app'}</Badge>
@@ -94,12 +107,16 @@ function TemplateTab() {
                   <p className="text-xs text-[var(--text-muted)] mt-0.5">{t.subject}</p>
                   <p className="text-xs text-[var(--text-muted)] mt-1 line-clamp-2">{t.body_template}</p>
                 </div>
+                <div className="flex gap-1 ml-2 shrink-0">
+                  <Button size="sm" variant="outline" onClick={() => openEdit(t)}><Pencil className="w-3.5 h-3.5" /></Button>
+                  <Button size="sm" variant="outline" onClick={() => handleDelete(t.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                </div>
               </div>
             </Card>
           ))}
         </div>
       )}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Tambah Template"
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Edit Template' : 'Tambah Template'}
         footer={<div className="flex gap-2 justify-end"><Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button><Button loading={saving} onClick={handleSave}>Simpan</Button></div>} size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -222,6 +239,7 @@ function CalendarTab() {
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState({ period_id: '', title: '', description: '', event_date: '', event_type: 'academic' })
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
@@ -229,12 +247,24 @@ function CalendarTab() {
   useEffect(() => { load() }, [])
   async function load() { setLoading(true); try { setEvents(await notifService.getAdminCalendar()) } catch { toast('error', 'Gagal memuat') } finally { setLoading(false) } }
 
-  function openCreate() { setForm({ period_id: '', title: '', description: '', event_date: '', event_type: 'academic' }); setModalOpen(true) }
+  function openCreate() { setEditId(null); setForm({ period_id: '', title: '', description: '', event_date: '', event_type: 'academic' }); setModalOpen(true) }
+
+  function openEdit(e: any) { setEditId(e.id); setForm({ period_id: e.period_id || '', title: e.title, description: e.description || '', event_date: e.event_date, event_type: e.event_type }); setModalOpen(true) }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Hapus event ini?')) return
+    try { await notifService.deleteCalendarEvent(id); toast('success', 'Event dihapus'); load() }
+    catch (e: any) { toast('error', e.message) }
+  }
 
   async function handleSave() {
     if (!form.title || !form.event_date || !form.period_id) return toast('warning', 'Lengkapi field')
     setSaving(true)
-    try { await notifService.createCalendarEvent(form); toast('success', 'Event dibuat'); setModalOpen(false); load() }
+    try {
+      if (editId) { await notifService.updateCalendarEvent(editId, form); toast('success', 'Event diperbarui') }
+      else { await notifService.createCalendarEvent(form); toast('success', 'Event dibuat') }
+      setModalOpen(false); load()
+    }
     catch (e: any) { toast('error', e.message) } finally { setSaving(false) }
   }
 
@@ -252,7 +282,7 @@ function CalendarTab() {
                   <p className="text-2xl font-bold text-[var(--accent)]">{new Date(e.event_date).getDate()}</p>
                   <p className="text-xs text-[var(--text-muted)]">{new Date(e.event_date).toLocaleDateString('id-ID', { month: 'short' })}</p>
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm">{e.title}</h3>
                   <div className="flex items-center gap-2 mt-0.5">
                     <Badge variant="default">{e.event_type}</Badge>
@@ -260,12 +290,16 @@ function CalendarTab() {
                   </div>
                   {e.description && <p className="text-xs text-[var(--text-muted)] mt-1">{e.description}</p>}
                 </div>
+                <div className="flex gap-1 ml-2 shrink-0">
+                  <Button size="sm" variant="outline" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></Button>
+                  <Button size="sm" variant="outline" onClick={() => handleDelete(e.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                </div>
               </div>
             </Card>
           ))}
         </div>
       )}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Tambah Event"
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Edit Event' : 'Tambah Event'}
         footer={<div className="flex gap-2 justify-end"><Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button><Button loading={saving} onClick={handleSave}>Simpan</Button></div>}>
         <div className="space-y-4">
           <Input label="Period ID" value={form.period_id} onChange={e => setForm({ ...form, period_id: e.target.value })} placeholder="UUID periode" />
