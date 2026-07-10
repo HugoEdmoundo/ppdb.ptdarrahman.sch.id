@@ -93,6 +93,23 @@ export function AdminLayout() {
 }
 
 function SidebarContent({ collapsed, filtered, currentPath }: { collapsed: boolean; filtered: typeof navItems; currentPath: string }) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    // Auto-expand parent yang child-nya active
+    const updates: Record<string, boolean> = {}
+    filtered.forEach(item => {
+      if (item.children) {
+        updates[item.label] = !!item.children.some(c => currentPath.startsWith(c.href))
+      }
+    })
+    setExpanded(prev => ({ ...prev, ...updates }))
+  }, [currentPath])
+
+  function toggle(label: string) {
+    setExpanded(prev => ({ ...prev, [label]: !prev[label] }))
+  }
+
   return (
     <>
       <div className={collapsed ? 'flex justify-center px-2 py-3' : 'px-5 py-4'}>
@@ -110,13 +127,14 @@ function SidebarContent({ collapsed, filtered, currentPath }: { collapsed: boole
           const Icon = item.icon
           const active = item.href ? currentPath === item.href || currentPath.startsWith(item.href + '/') : !!item.children?.some(c => currentPath.startsWith(c.href))
           if (item.children) {
+            const isExpanded = expanded[item.label]
             return (
               <div key={item.label}>
-                <div className={`flex items-center gap-3 rounded-xl text-sm font-medium transition-colors cursor-pointer ${active ? 'bg-[var(--accent-subtle)] text-[var(--accent)] shadow-sm' : 'text-[var(--text-secondary)] hover:bg-[var(--accent-subtle)] hover:text-[var(--text)]'} ${collapsed ? 'justify-center p-2' : 'px-3 py-2.5'}`} title={collapsed ? item.label : undefined}>
+                <button onClick={() => toggle(item.label)} className={`w-full flex items-center gap-3 rounded-xl text-sm font-medium transition-colors cursor-pointer ${active ? 'bg-[var(--accent-subtle)] text-[var(--accent)] shadow-sm' : 'text-[var(--text-secondary)] hover:bg-[var(--accent-subtle)] hover:text-[var(--text)]'} ${collapsed ? 'justify-center p-2' : 'px-3 py-2.5'}`} title={collapsed ? item.label : undefined}>
                   <Icon className="w-4 h-4 shrink-0" />
-                  {!collapsed && <><span className="flex-1">{item.label}</span><ChevronDown className={`w-4 h-4 transition-transform ${active ? 'rotate-180' : ''}`} /></>}
-                </div>
-                {!collapsed && active && (
+                  {!collapsed && <><span className="flex-1 text-left">{item.label}</span><ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} /></>}
+                </button>
+                {!collapsed && isExpanded && (
                   <div className="ml-8 mt-0.5 space-y-0.5">{item.children.map(c => (<Link key={c.href} to={c.href} className={`block px-3 py-2 rounded-lg text-xs transition-colors ${currentPath === c.href ? 'text-[var(--accent)] bg-[var(--accent-subtle)] font-semibold' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--accent-subtle)]'}`}>{c.label}</Link>))}</div>
                 )}
               </div>
