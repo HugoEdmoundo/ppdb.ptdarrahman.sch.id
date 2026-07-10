@@ -1,8 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, ChevronDown, ClipboardList, Upload, FileCheck, BookOpen, Laptop, Users } from 'lucide-react'
+import { ArrowRight, ChevronDown, ClipboardList, Upload, FileCheck, BookOpen, Laptop, Users, Award, Calendar } from 'lucide-react'
 import SectionTitle from '../../components/shared/SectionTitle'
 import VerseStrip from '../../components/shared/VerseStrip'
+import Particles from '../../components/shared/Particles'
+import MagneticButton from '../../components/shared/MagneticButton'
 
 const steps = [
   { num: '01', icon: ClipboardList, title: 'Registrasi Online', desc: 'Buat akun dan isi formulir pendaftaran secara online melalui portal PPDB.' },
@@ -19,11 +21,13 @@ const programs = [
 export default function LandingPage() {
   const decorRef1 = useRef<HTMLDivElement>(null)
   const decorRef2 = useRef<HTMLDivElement>(null)
+  const rightRef = useRef<HTMLDivElement>(null)
 
   return (
     <div>
       {/* ── Hero Section ── */}
       <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-[#F7F5F0] via-white to-[#F0EDE4]">
+        <Particles count={40} />
         <div className="absolute inset-0 bg-pattern-dots opacity-[0.15] pointer-events-none" />
         <div ref={decorRef1} className="absolute top-0 right-0 w-1/2 h-full opacity-[0.04] pointer-events-none"
           style={{ background: 'radial-gradient(ellipse at center, var(--color-emerald) 0%, transparent 70%)' }}
@@ -65,17 +69,21 @@ export default function LandingPage() {
               </p>
 
               <div className="flex flex-wrap gap-3 sm:gap-4 mb-8 sm:mb-10">
-                <Link to="/auth/register" className="btn-primary gap-2 shadow-md hover:shadow-lg text-xs sm:text-sm px-5 sm:px-8 py-2.5 sm:py-3.5">
-                  Daftar Sekarang
-                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </Link>
-                <Link to="/info" className="btn-ghost text-xs sm:text-sm px-5 sm:px-8 py-2.5 sm:py-3.5">
-                  Informasi PPDB
-                </Link>
+                <MagneticButton strength={0.3}>
+                  <Link to="/auth/register" className="btn-primary gap-2 shadow-md hover:shadow-lg text-xs sm:text-sm px-5 sm:px-8 py-2.5 sm:py-3.5">
+                    Daftar Sekarang
+                    <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </Link>
+                </MagneticButton>
+                <MagneticButton strength={0.3}>
+                  <Link to="/info" className="btn-ghost text-xs sm:text-sm px-5 sm:px-8 py-2.5 sm:py-3.5">
+                    Informasi PPDB
+                  </Link>
+                </MagneticButton>
               </div>
             </div>
 
-            <div className="lg:col-span-5 hidden lg:block">
+            <div ref={rightRef} className="lg:col-span-5 hidden lg:block">
               <div className="relative pl-8">
                 <div className="relative">
                   <div className="rounded-2xl overflow-hidden shadow-xl border border-white/60"
@@ -88,6 +96,41 @@ export default function LandingPage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                   </div>
+
+                  {/* Badge - Top right */}
+                  <div className="absolute -top-4 -right-4 bg-white rounded-xl px-4 py-3 shadow-lg border border-[var(--color-border)] flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-[var(--accent-subtle)] flex items-center justify-center">
+                      <Award className="w-5 h-5 text-[var(--accent)]" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold font-[var(--font-heading)] text-[var(--accent)]">
+                        PPDB Online
+                      </div>
+                      <div className="text-[10px] sm:text-xs text-[var(--text-muted)]">2026 • Pendaftaran Digital</div>
+                    </div>
+                  </div>
+
+                  {/* Card - Bottom right */}
+                  <div className="absolute -bottom-5 -right-4 bg-white rounded-xl px-4 py-3 shadow-lg border border-[var(--color-border)] flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-[var(--accent-subtle)] flex items-center justify-center">
+                      <Calendar className="w-5 h-5 text-[var(--accent)]" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                        Pendaftaran
+                      </div>
+                      <div className="font-[var(--font-heading)] text-sm font-bold text-[var(--accent-gold)]">
+                        2026/2027
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Decorative dots pattern */}
+                <div className="absolute -bottom-8 -right-8 grid grid-cols-6 gap-2 opacity-10 pointer-events-none">
+                  {Array.from({ length: 36 }).map((_, i) => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
+                  ))}
                 </div>
               </div>
             </div>
@@ -179,11 +222,11 @@ export default function LandingPage() {
             Daftarkan diri Anda sekarang dan mulailah perjalanan menuju generasi hafizh yang melek teknologi.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <Link to="/auth/register" className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-[var(--accent)] font-bold text-sm rounded-full hover:shadow-xl hover:-translate-y-0.5 transition-all">
+            <Link to="/auth/register" className="btn-primary gap-2 shadow-md hover:shadow-lg">
               Daftar Sekarang
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link to="/info" className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-white/30 text-white font-semibold text-sm rounded-full hover:bg-white/10 hover:border-white/50 transition-all">
+            <Link to="/info" className="btn-ghost !text-white !border-white/30 hover:!border-white hover:!text-white hover:!bg-white/10">
               Pelajari Dulu
             </Link>
           </div>

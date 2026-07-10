@@ -61,15 +61,33 @@ export default function App() {
               <Route path="kontak" element={<P title="Kontak" />} />
               <Route path="register" element={<P title="Register" />} />
             </Route>
-            <Route path="/admin/*" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-              <Route index element={<AdminDashboardPage />} />
-              {adminRoutes}
-            </Route>
-            <Route path="/applicant/*" element={<ProtectedRoute><ApplicantLayout /></ProtectedRoute>}>
-              <Route index element={<ApplicantDashboard />} />
-              <Route path="documents" element={<ApplicantDocumentsPage />} />
-              {applicantRoutes}
-            </Route>
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <Routes>
+                      <Route index element={<AdminDashboardPage />} />
+                      {adminRoutes}
+                    </Routes>
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/applicant/*"
+              element={
+                <ProtectedRoute>
+                  <ApplicantLayout>
+                    <Routes>
+                      <Route index element={<ApplicantDashboard />} />
+                      <Route path="documents" element={<ApplicantDocumentsPage />} />
+                      {applicantRoutes}
+                    </Routes>
+                  </ApplicantLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

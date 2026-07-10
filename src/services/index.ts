@@ -93,3 +93,8 @@ export const dashboardService = {
   getAuditLogs: (params?: any) => apiFetch<any>(`/dashboard/audit-logs${params ? '?' + new URLSearchParams(params) : ''}`),
   getReportsSummary: () => apiFetch<any>('/dashboard/reports/summary'),
 }
+
+export const settingsService = {
+  getAll: () => apiFetch<{ key: string; value: string }[]>('/companyprofile/settings'),
+  getFavicon: () => apiFetch<{ value: string }>('/companyprofile/settings/favicon'),
+}

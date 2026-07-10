@@ -3,7 +3,18 @@ import { useAuth } from '../contexts/AuthContext'
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" /></div>
-  if (!user) return <Navigate to="/auth/login" replace />
+
+  if (loading) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center bg-[var(--bg)]">
+        <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/auth/login" replace />
+  }
+
   return <>{children}</>
 }

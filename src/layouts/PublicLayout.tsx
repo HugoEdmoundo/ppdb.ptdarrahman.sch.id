@@ -1,9 +1,58 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Menu, X, ChevronDown, MapPin, Phone, Mail, ArrowUpRight, GraduationCap } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Menu, X, MapPin, Phone, Mail, ArrowUpRight, GraduationCap } from 'lucide-react'
+import { useState, useEffect, type ReactNode, type MouseEvent, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { APP_NAME } from '../utils/constants'
 import VerseStrip from '../components/shared/VerseStrip'
+
+const LOGO_URL = 'https://res.cloudinary.com/dunynusuh/image/upload/v1755771459/Logo-Ar-Rahman_fm4mgg.png'
+
+/* ── AnimatedLogo ── */
+function AnimatedLogo({ isTransparent }: { isTransparent?: boolean }) {
+  return (
+    <span className="relative inline-block">
+      <span
+        className="absolute inset-0 rounded-full opacity-0"
+        style={{
+          background: 'radial-gradient(circle, var(--color-gold) 0%, transparent 70%)',
+          animation: 'logoPulse 3s ease-in-out infinite',
+        }}
+      />
+      <img
+        src={LOGO_URL}
+        alt="PTDARRAHMAN Logo"
+        className={`h-8 sm:h-10 w-auto object-contain relative transition-all duration-300 ${
+          isTransparent ? 'brightness-0 invert' : ''
+        }`}
+        style={{ animation: 'logoFloat 4s ease-in-out infinite' }}
+      />
+    </span>
+  )
+}
+
+/* ── MagneticButton ── */
+function MagneticButton({ children, strength = 0.25 }: { children: ReactNode; strength?: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const handleMouseMove = (e: MouseEvent) => {
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const x = (e.clientX - rect.left - rect.width / 2) * strength
+    const y = (e.clientY - rect.top - rect.height / 2) * strength
+    el.firstElementChild?.setAttribute('style', `transform: translate(${x}px, ${y}px); transition: transform 0.1s ease-out;`)
+  }
+  const handleMouseLeave = () => {
+    const el = ref.current?.firstElementChild as HTMLElement | null
+    if (!el) return
+    el.style.transform = 'translate(0px, 0px)'
+    el.style.transition = 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1)'
+  }
+  return (
+    <div ref={ref} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} style={{ display: 'inline-block' }}>
+      {children}
+    </div>
+  )
+}
 
 const navItems = [
   { href: '/', label: 'Beranda' },
@@ -42,11 +91,7 @@ export function PublicLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <nav role="navigation" aria-label="Navigasi utama" className="flex items-center justify-between h-16 md:h-20">
             <Link to="/" className="flex items-center gap-2 md:gap-3 flex-shrink-0 min-w-0">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                isTransparent ? 'bg-white/20' : 'bg-[var(--accent)]'
-              }`}>
-                <GraduationCap className={`w-5 h-5 ${isTransparent ? 'text-white' : 'text-white'}`} />
-              </div>
+              <AnimatedLogo isTransparent={isTransparent} />
               <div>
                 <span className={`font-[var(--font-heading)] text-sm font-bold leading-tight transition-colors ${
                   isTransparent ? 'text-white' : 'text-[var(--text)]'
@@ -80,16 +125,18 @@ export function PublicLayout() {
 
             <div className="flex items-center gap-3">
               {user ? (
-                <Link
-                  to="/applicant"
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-full whitespace-nowrap transition-all ${
-                    isTransparent
-                      ? 'bg-white/20 text-white hover:bg-white/30'
-                      : 'bg-[var(--accent)] text-white hover:bg-[#15803D] hover:shadow-md'
-                  }`}
-                >
-                  Dashboard
-                </Link>
+                <MagneticButton strength={0.25}>
+                  <Link
+                    to="/applicant"
+                    className={`inline-flex items-center px-5 py-2.5 text-xs font-bold rounded-full whitespace-nowrap transition-all ${
+                      isTransparent
+                        ? 'bg-white/20 text-white hover:bg-white/30'
+                        : 'bg-[var(--accent)] text-white hover:bg-[#15803D] hover:shadow-md'
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                </MagneticButton>
               ) : (
                 <div className="hidden md:flex items-center gap-3">
                   <Link
@@ -102,21 +149,23 @@ export function PublicLayout() {
                   >
                     Login
                   </Link>
-                  <Link
-                    to="/auth/register"
-                    className={`inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-full whitespace-nowrap transition-all ${
-                      isTransparent
-                        ? 'bg-white/20 text-white hover:bg-white/30'
-                        : 'bg-[var(--accent)] text-white hover:bg-[#15803D] hover:shadow-md'
-                    }`}
-                  >
-                    Daftar
-                  </Link>
+                  <MagneticButton strength={0.25}>
+                    <Link
+                      to="/auth/register"
+                      className={`inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-full whitespace-nowrap transition-all ${
+                        isTransparent
+                          ? 'bg-white/20 text-white hover:bg-white/30'
+                          : 'bg-[var(--accent)] text-white hover:bg-[#15803D] hover:shadow-md'
+                      }`}
+                    >
+                      Daftar
+                    </Link>
+                  </MagneticButton>
                 </div>
               )}
 
               <button
-                className="lg:hidden! inline-flex items-center justify-center z-50 p-3 rounded-lg hover:bg-black/5 active:bg-black/10 focus:outline-none transition-colors"
+                className="lg:hidden! inline-flex items-center justify-center z-50 p-3 rounded-lg hover:bg-black/5 active:bg-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2 transition-colors"
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label="Buka/tutup menu"
                 aria-expanded={mobileOpen}
