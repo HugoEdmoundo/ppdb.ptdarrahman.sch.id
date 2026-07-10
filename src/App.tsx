@@ -29,31 +29,6 @@ const applicantRoutes = [
 ].map(p => <Route key={p} path={p} element={<P title={p} />} />)
 
 export default function App() {
-import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
-
-function App() {
-  const [count, setCount] = useState(0)
-
-  useEffect(() => {
-    const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/companyprofile/settings/favicon`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.value) {
-          if (link) link.href = data.value
-        } else if (link) {
-          link.href = '/download.png'
-        }
-      })
-      .catch(() => {
-        if (link) link.href = '/download.png'
-      })
-  }, [])
-
   return (
     <BrowserRouter>
       <AuthProvider>
