@@ -2,7 +2,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import {
   BarChart3, User, FileText, CreditCard, Calendar, GraduationCap,
-  FileDown, ClipboardList, ChevronLeft, Menu, LogOut,
+  FileDown, ClipboardList, ChevronLeft, Menu, LogOut, Users, Clock, Bell,
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { settingsService } from '../services/index'
@@ -11,11 +11,14 @@ import { API_BASE } from '../api/client'
 const NAV_ITEMS = [
   { to: '/applicant', icon: BarChart3, label: 'Dashboard' },
   { to: '/applicant/profile', icon: User, label: 'Profil' },
+  { to: '/applicant/parents', icon: Users, label: 'Orang Tua' },
+  { to: '/applicant/history', icon: Clock, label: 'Riwayat' },
   { to: '/applicant/documents', icon: FileText, label: 'Dokumen' },
   { to: '/applicant/payments', icon: CreditCard, label: 'Pembayaran' },
   { to: '/applicant/tests', icon: Calendar, label: 'Tes' },
   { to: '/applicant/results', icon: GraduationCap, label: 'Hasil' },
   { to: '/applicant/mou', icon: FileDown, label: 'MOU' },
+  { to: '/applicant/notifications', icon: Bell, label: 'Notifikasi' },
   { to: '/applicant/re-registration', icon: ClipboardList, label: 'Daftar Ulang' },
 ]
 

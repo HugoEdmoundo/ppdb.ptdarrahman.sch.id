@@ -2,7 +2,6 @@ import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronDown, ClipboardList, Upload, FileCheck, BookOpen, Laptop, Users, Award, Calendar } from 'lucide-react'
 import SectionTitle from '../../components/shared/SectionTitle'
-import VerseStrip from '../../components/shared/VerseStrip'
 import Particles from '../../components/shared/Particles'
 import MagneticButton from '../../components/shared/MagneticButton'
 
@@ -156,7 +155,7 @@ export default function LandingPage() {
           center
         />
         <div className="grid sm:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {steps.map((step, i) => {
+          {steps.map((step) => {
             const Icon = step.icon
             return (
               <div key={step.num} className="glass-card p-8 text-center group">

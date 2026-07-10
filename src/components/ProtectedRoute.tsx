@@ -1,7 +1,9 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
+const ADMIN_ROLES = ['superadmin', 'admin_ppdb', 'admin_keuangan', 'penguji']
+
+export default function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: 'admin' | 'applicant' }) {
   const { user, loading } = useAuth()
 
   if (loading) {
@@ -14,6 +16,16 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (!user) {
     return <Navigate to="/auth/login" replace />
+  }
+
+  const isAdmin = ADMIN_ROLES.includes(user.user_type || '')
+
+  if (role === 'admin' && !isAdmin) {
+    return <Navigate to="/applicant" replace />
+  }
+
+  if (role === 'applicant' && isAdmin) {
+    return <Navigate to="/admin" replace />
   }
 
   return <>{children}</>

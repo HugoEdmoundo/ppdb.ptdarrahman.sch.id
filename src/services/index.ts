@@ -1,5 +1,40 @@
 import { apiFetch } from '../api/client'
 
+export const ppdbService = {
+  getPeriods: (params?: any) => apiFetch<any>(`/ppdb/periods${params ? '?' + new URLSearchParams(params) : ''}`),
+  getAllPeriods: () => apiFetch<any[]>('/ppdb/periods/all'),
+  getPeriod: (id: string) => apiFetch<any>(`/ppdb/periods/${id}`),
+  createPeriod: (body: any) => apiFetch<any>('/ppdb/periods', { method: 'POST', body: JSON.stringify(body) }),
+  updatePeriod: (id: string, body: any) => apiFetch<any>(`/ppdb/periods/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deletePeriod: (id: string) => apiFetch<void>(`/ppdb/periods/${id}`, { method: 'DELETE' }),
+  getWaves: (params?: any) => apiFetch<any>(`/ppdb/waves${params ? '?' + new URLSearchParams(params) : ''}`),
+  getAllWaves: (periodId?: string) => apiFetch<any[]>(`/ppdb/waves/all${periodId ? '?period_id=' + periodId : ''}`),
+  getWave: (id: string) => apiFetch<any>(`/ppdb/waves/${id}`),
+  createWave: (body: any) => apiFetch<any>('/ppdb/waves', { method: 'POST', body: JSON.stringify(body) }),
+  updateWave: (id: string, body: any) => apiFetch<any>(`/ppdb/waves/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteWave: (id: string) => apiFetch<void>(`/ppdb/waves/${id}`, { method: 'DELETE' }),
+  getLevels: () => apiFetch<any[]>('/ppdb/levels'),
+  getLevel: (id: string) => apiFetch<any>(`/ppdb/levels/${id}`),
+  createLevel: (body: any) => apiFetch<any>('/ppdb/levels', { method: 'POST', body: JSON.stringify(body) }),
+  updateLevel: (id: string, body: any) => apiFetch<any>(`/ppdb/levels/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteLevel: (id: string) => apiFetch<void>(`/ppdb/levels/${id}`, { method: 'DELETE' }),
+  getCategories: () => apiFetch<any[]>('/ppdb/categories'),
+  getCategory: (id: string) => apiFetch<any>(`/ppdb/categories/${id}`),
+  createCategory: (body: any) => apiFetch<any>('/ppdb/categories', { method: 'POST', body: JSON.stringify(body) }),
+  updateCategory: (id: string, body: any) => apiFetch<any>(`/ppdb/categories/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteCategory: (id: string) => apiFetch<void>(`/ppdb/categories/${id}`, { method: 'DELETE' }),
+  getFlows: () => apiFetch<any[]>('/ppdb/flows'),
+  getFlow: (id: string) => apiFetch<any>(`/ppdb/flows/${id}`),
+  createFlow: (body: any) => apiFetch<any>('/ppdb/flows', { method: 'POST', body: JSON.stringify(body) }),
+  updateFlow: (id: string, body: any) => apiFetch<any>(`/ppdb/flows/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteFlow: (id: string) => apiFetch<void>(`/ppdb/flows/${id}`, { method: 'DELETE' }),
+  getWaveConfigs: (params?: any) => apiFetch<any>(`/ppdb/wave-configs${params ? '?' + new URLSearchParams(params) : ''}`),
+  getWaveConfig: (id: string) => apiFetch<any>(`/ppdb/wave-configs/${id}`),
+  createWaveConfig: (body: any) => apiFetch<any>('/ppdb/wave-configs', { method: 'POST', body: JSON.stringify(body) }),
+  updateWaveConfig: (id: string, body: any) => apiFetch<any>(`/ppdb/wave-configs/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteWaveConfig: (id: string) => apiFetch<void>(`/ppdb/wave-configs/${id}`, { method: 'DELETE' }),
+}
+
 export const applicantService = {
   getMyApplication: () => apiFetch<any>('/ppdb/applicants/me'),
   register: (body: any) => apiFetch<any>('/ppdb/applicants/register', { method: 'POST', body: JSON.stringify(body) }),
@@ -47,6 +82,7 @@ export const selectionService = {
   getMyResults: () => apiFetch<any[]>('/selection/applicants/me/results'),
   getMyGraduation: () => apiFetch<any>('/selection/applicants/me/graduation'),
   saveResult: (body: any) => apiFetch<any>('/selection/results', { method: 'POST', body: JSON.stringify(body) }),
+  getResults: (params?: any) => apiFetch<any>(`/selection/results${params ? '?' + new URLSearchParams(params) : ''}`),
   getGraduations: (params?: any) => apiFetch<any>(`/selection/graduations${params ? '?' + new URLSearchParams(params) : ''}`),
   setGraduation: (body: any) => apiFetch<any>('/selection/graduations', { method: 'POST', body: JSON.stringify(body) }),
   getGraduationRules: (waveConfigId?: string) => apiFetch<any[]>(`/selection/graduation-rules${waveConfigId ? '?wave_config_id=' + waveConfigId : ''}`),
@@ -92,6 +128,7 @@ export const dashboardService = {
   getStats: () => apiFetch<any>('/dashboard/stats'),
   getAuditLogs: (params?: any) => apiFetch<any>(`/dashboard/audit-logs${params ? '?' + new URLSearchParams(params) : ''}`),
   getReportsSummary: () => apiFetch<any>('/dashboard/reports/summary'),
+  exportReport: (type: string) => `/dashboard/reports/export/${type}`,
 }
 
 export const settingsService = {

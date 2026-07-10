@@ -2,7 +2,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import {
   LayoutDashboard, Settings, Users, GraduationCap, CreditCard, FileText,
-  Calendar, BarChart3, ClipboardList, ChevronDown, ChevronLeft, Menu, LogOut,
+  BarChart3, ChevronDown, ChevronLeft, Menu, LogOut, Bell,
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { settingsService } from '../services/index'
@@ -11,16 +11,14 @@ import { API_BASE } from '../api/client'
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
   { label: 'Konfigurasi PPDB', icon: Settings, roles: ['superadmin'], children: [
-    { label: 'Periode', href: '/admin/periods' }, { label: 'Gelombang', href: '/admin/waves' }, { label: 'Jenjang', href: '/admin/levels' }, { label: 'Kategori', href: '/admin/categories' }, { label: 'Alur Seleksi', href: '/admin/flows' }, { label: 'Konfigurasi', href: '/admin/wave-configs' },
+    { label: 'Periode & Gelombang', href: '/admin/periods' }, { label: 'Jenjang, Kategori & Alur', href: '/admin/levels' }, { label: 'Konfigurasi Gelombang', href: '/admin/wave-configs' },
   ]},
   { label: 'Pendaftar', icon: Users, children: [{ label: 'Daftar', href: '/admin/applicants' }, { label: 'Verifikasi Dokumen', href: '/admin/documents' }] },
   { label: 'Seleksi', icon: GraduationCap, children: [{ label: 'Jadwal Tes', href: '/admin/test-sessions' }, { label: 'Nilai', href: '/admin/test-scores' }, { label: 'Kelulusan', href: '/admin/graduations' }] },
   { label: 'Keuangan', icon: CreditCard, roles: ['superadmin', 'admin_keuangan'], children: [{ label: 'Pembayaran', href: '/admin/payments' }, { label: 'Invoice', href: '/admin/invoices' }, { label: 'Diskon', href: '/admin/discounts' }] },
-  { label: 'MOU', icon: FileText, href: '/admin/mou' },
-  { label: 'Daftar Ulang', icon: ClipboardList, href: '/admin/re-registrations' },
-  { label: 'MPLS', icon: Calendar, href: '/admin/mpls' },
+  { label: 'Post-Seleksi', icon: FileText, children: [{ label: 'MOU', href: '/admin/mou' }, { label: 'Daftar Ulang', href: '/admin/re-registrations' }, { label: 'MPLS', href: '/admin/mpls' }] },
   { label: 'Laporan', icon: BarChart3, href: '/admin/reports' },
-  { label: 'Pengaturan', icon: Settings, roles: ['superadmin'], children: [{ label: 'Users', href: '/admin/users' }, { label: 'Roles', href: '/admin/roles' }, { label: 'Notifikasi', href: '/admin/notifications' }] },
+  { label: 'Notifikasi', icon: Bell, href: '/admin/notifications' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -11,40 +11,46 @@ import RegisterPage from './pages/auth/RegisterPage'
 import NotFoundPage from './pages/errors/NotFoundPage'
 import ForbiddenPage from './pages/errors/ForbiddenPage'
 import LandingPage from './pages/public/LandingPage'
+import PublicRegisterPage from './pages/public/PublicRegisterPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import PeriodsPage from './pages/admin/PeriodsPage'
+import LevelsPage from './pages/admin/LevelsPage'
+import WaveConfigPage from './pages/admin/WaveConfigPage'
+import AdminDocumentsPage from './pages/admin/AdminDocumentsPage'
+import AdminPaymentsPage from './pages/admin/AdminPaymentsPage'
+import AdminSelectionPage from './pages/admin/AdminSelectionPage'
+import AdminPostPage from './pages/admin/AdminPostPage'
+import AdminNotificationsPage from './pages/admin/AdminNotificationsPage'
+import AdminReportsPage from './pages/admin/AdminReportsPage'
+import AdminApplicantsPage from './pages/admin/AdminApplicantsPage'
+import AdminAuditLogPage from './pages/admin/AdminAuditLogPage'
 import ApplicantDashboard from './pages/applicant/ApplicantDashboard'
 import ApplicantDocumentsPage from './pages/applicant/ApplicantDocumentsPage'
+import ApplicantProfilePage from './pages/applicant/ApplicantProfilePage'
+import ApplicantParentsPage from './pages/applicant/ApplicantParentsPage'
+import ApplicantHistoryPage from './pages/applicant/ApplicantHistoryPage'
+import ApplicantPaymentsPage from './pages/applicant/ApplicantPaymentsPage'
+import ApplicantTestsPage from './pages/applicant/ApplicantTestsPage'
+import ApplicantPostPage from './pages/applicant/ApplicantPostPage'
+import ApplicantNotificationsPage from './pages/applicant/ApplicantNotificationsPage'
 import * as api from './api/client'
 
 const P = ({ title }: { title: string }) => (
   <div className="flex flex-col items-center justify-center py-20"><h1 className="text-xl font-semibold">{title}</h1><p className="text-gray-500 mt-2">Segera hadir.</p></div>
 )
 
-const adminRoutes = [
-  'periods','waves','levels','categories','flows','wave-configs','applicants','documents',
-  'test-sessions','test-scores','graduations','payments','invoices','discounts','mou',
-  're-registrations','mpls','reports','audit-log','calendar','users','roles','notifications',
-].map(p => <Route key={p} path={p} element={<P title={p} />} />)
+const placeholderAdmin = ['users','roles']
+  .map(p => <Route key={p} path={p} element={<P title={p} />} />)
 
-const applicantRoutes = [
-  'profile','payments','tests','results','mou','re-registration','parents','history',
-].map(p => <Route key={p} path={p} element={<P title={p} />} />)
+const placeholderApplicant: ReturnType<typeof Route>[] = []
 
 export default function App() {
   useEffect(() => {
     const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement
     fetch(`${api.API_BASE}/companyprofile/settings/favicon`)
       .then(res => res.json())
-      .then(data => {
-        if (data && data.value) {
-          if (link) link.href = data.value
-        } else if (link) {
-          link.href = '/download.png'
-        }
-      })
-      .catch(() => {
-        if (link) link.href = '/download.png'
-      })
+      .then(data => { if (data?.value && link) link.href = data.value; else if (link) link.href = '/download.png' })
+      .catch(() => { if (link) link.href = '/download.png' })
   }, [])
 
   return (
@@ -54,40 +60,53 @@ export default function App() {
           <Routes>
             <Route path="/auth/login" element={<LoginPage />} />
             <Route path="/auth/register" element={<RegisterPage />} />
+
             <Route path="/" element={<PublicLayout />}>
               <Route index element={<LandingPage />} />
               <Route path="info" element={<P title="Info" />} />
               <Route path="jadwal" element={<P title="Jadwal" />} />
               <Route path="kontak" element={<P title="Kontak" />} />
-              <Route path="register" element={<P title="Register" />} />
+              <Route path="register" element={<PublicRegisterPage />} />
             </Route>
-            <Route
-              path="/admin/*"
-              element={
-                <ProtectedRoute>
-                  <AdminLayout>
-                    <Routes>
-                      <Route index element={<AdminDashboardPage />} />
-                      {adminRoutes}
-                    </Routes>
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/applicant/*"
-              element={
-                <ProtectedRoute>
-                  <ApplicantLayout>
-                    <Routes>
-                      <Route index element={<ApplicantDashboard />} />
-                      <Route path="documents" element={<ApplicantDocumentsPage />} />
-                      {applicantRoutes}
-                    </Routes>
-                  </ApplicantLayout>
-                </ProtectedRoute>
-              }
-            />
+
+            <Route path="/admin/*" element={<ProtectedRoute role="admin"><AdminLayout><Routes>
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="periods" element={<PeriodsPage />} />
+              <Route path="levels" element={<LevelsPage />} />
+              <Route path="wave-configs" element={<WaveConfigPage />} />
+              <Route path="documents" element={<AdminDocumentsPage />} />
+              <Route path="payments" element={<AdminPaymentsPage />} />
+              <Route path="test-sessions" element={<AdminSelectionPage />} />
+              <Route path="mou" element={<AdminPostPage />} />
+              <Route path="notifications" element={<AdminNotificationsPage />} />
+              <Route path="reports" element={<AdminReportsPage />} />
+              <Route path="applicants" element={<AdminApplicantsPage />} />
+              <Route path="audit-log" element={<AdminAuditLogPage />} />
+              <Route path="test-scores" element={<AdminSelectionPage />} />
+              <Route path="graduations" element={<AdminSelectionPage />} />
+              <Route path="invoices" element={<AdminPaymentsPage />} />
+              <Route path="discounts" element={<AdminPaymentsPage />} />
+              <Route path="re-registrations" element={<AdminPostPage />} />
+              <Route path="mpls" element={<AdminPostPage />} />
+              <Route path="calendar" element={<AdminNotificationsPage />} />
+              {placeholderAdmin}
+            </Routes></AdminLayout></ProtectedRoute>} />
+
+            <Route path="/applicant/*" element={<ProtectedRoute role="applicant"><ApplicantLayout><Routes>
+              <Route index element={<ApplicantDashboard />} />
+              <Route path="documents" element={<ApplicantDocumentsPage />} />
+              <Route path="profile" element={<ApplicantProfilePage />} />
+              <Route path="parents" element={<ApplicantParentsPage />} />
+              <Route path="history" element={<ApplicantHistoryPage />} />
+              <Route path="payments" element={<ApplicantPaymentsPage />} />
+              <Route path="tests" element={<ApplicantTestsPage />} />
+              <Route path="mou" element={<ApplicantPostPage />} />
+              <Route path="notifications" element={<ApplicantNotificationsPage />} />
+              <Route path="re-registration" element={<ApplicantPostPage />} />
+              <Route path="results" element={<ApplicantTestsPage />} />
+              {placeholderApplicant}
+            </Routes></ApplicantLayout></ProtectedRoute>} />
+
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

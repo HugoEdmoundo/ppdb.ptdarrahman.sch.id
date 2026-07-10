@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, GraduationCap, Clock, CheckCircle, CreditCard, FileText, BarChart3, Layers } from 'lucide-react'
+import { Users, GraduationCap, Clock, CheckCircle, CreditCard, FileText, BarChart3, Layers, ScrollText } from 'lucide-react'
 import { dashboardService } from '../../services/index'
 import { useToast } from '../../components/Toast'
 
@@ -8,11 +8,15 @@ export default function AdminDashboardPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [stats, setStats] = useState<any>(null)
+  const [auditLogs, setAuditLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    dashboardService.getStats()
-      .then(setStats)
+    Promise.all([
+      dashboardService.getStats(),
+      dashboardService.getAuditLogs({ perPage: 10 }).then(r => (r as any).data || r || []).catch(() => []),
+    ])
+      .then(([s, logs]) => { setStats(s); setAuditLogs(logs) })
       .catch(() => toast('error', 'Gagal memuat data'))
       .finally(() => setLoading(false))
   }, [])
@@ -30,13 +34,11 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Header */}
       <div>
         <h1 className="font-[var(--font-heading)] text-2xl font-bold text-[var(--text)]">Dashboard</h1>
         <p className="text-sm text-[var(--text-muted)] mt-1">Ringkasan data PPDB</p>
       </div>
 
-      {/* Stats Grid */}
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
@@ -65,42 +67,53 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Quick Actions */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[var(--border)] p-6">
-        <h2 className="font-[var(--font-heading)] text-base font-bold text-[var(--text)] mb-4">Quick Actions</h2>
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => navigate('/admin/applicants')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--accent)] text-white text-sm font-semibold hover:bg-[var(--accent-hover)] shadow-md hover:shadow-lg transition-all active:scale-[0.97]"
-          >
-            <Users className="w-4 h-4" />
-            Kelola Pendaftar
-          </button>
-          <button
-            onClick={() => navigate('/admin/documents')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-sm font-semibold hover:bg-[var(--accent-subtle)] hover:border-[var(--accent)]/30 transition-all active:scale-[0.97]"
-          >
-            <FileText className="w-4 h-4" />
-            Verifikasi Dokumen
-          </button>
-          <button
-            onClick={() => navigate('/admin/payments')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-sm font-semibold hover:bg-[var(--accent-subtle)] hover:border-[var(--accent)]/30 transition-all active:scale-[0.97]"
-          >
-            <CreditCard className="w-4 h-4" />
-            Pembayaran
-          </button>
-          <button
-            onClick={() => navigate('/admin/periods')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-sm font-semibold hover:bg-[var(--accent-subtle)] hover:border-[var(--accent)]/30 transition-all active:scale-[0.97]"
-          >
-            <BarChart3 className="w-4 h-4" />
-            Periode PPDB
-          </button>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[var(--border)] p-6">
+          <h2 className="font-[var(--font-heading)] text-base font-bold text-[var(--text)] mb-4">Quick Actions</h2>
+          <div className="flex flex-wrap gap-3">
+            <button onClick={() => navigate('/admin/applicants')} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--accent)] text-white text-sm font-semibold hover:bg-[var(--accent-hover)] shadow-md active:scale-[0.97] transition-all">
+              <Users className="w-4 h-4" /> Kelola Pendaftar
+            </button>
+            <button onClick={() => navigate('/admin/documents')} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-sm font-semibold hover:bg-[var(--accent-subtle)] active:scale-[0.97] transition-all">
+              <FileText className="w-4 h-4" /> Verifikasi Dokumen
+            </button>
+            <button onClick={() => navigate('/admin/payments')} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-sm font-semibold hover:bg-[var(--accent-subtle)] active:scale-[0.97] transition-all">
+              <CreditCard className="w-4 h-4" /> Pembayaran
+            </button>
+            <button onClick={() => navigate('/admin/periods')} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-sm font-semibold hover:bg-[var(--accent-subtle)] active:scale-[0.97] transition-all">
+              <BarChart3 className="w-4 h-4" /> Periode PPDB
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[var(--border)] p-6">
+          <h2 className="font-[var(--font-heading)] text-base font-bold text-[var(--text)] mb-4 flex items-center gap-2">
+            <ScrollText className="w-4 h-4 text-[var(--text-muted)]" /> Aktivitas Terbaru
+          </h2>
+          {auditLogs.length === 0 ? (
+            <p className="text-sm text-[var(--text-muted)] text-center py-4">Belum ada aktivitas.</p>
+          ) : (
+            <div className="space-y-2">
+              {auditLogs.map((log: any, idx: number) => (
+                <div key={log.id || idx} className="flex items-center justify-between text-sm py-1.5 border-b border-[var(--border)] last:border-0">
+                  <div>
+                    <span className="font-medium">{log.user_username || log.user_id}</span>
+                    <span className="text-[var(--text-muted)] mx-1.5">·</span>
+                    <span className="text-[var(--text-muted)]">{log.action}</span>
+                    <span className="text-[var(--text-muted)] mx-1.5">·</span>
+                    <span className="text-xs text-[var(--text-muted)]">{log.entity_type}</span>
+                  </div>
+                  <span className="text-xs text-[var(--text-muted)]">{new Date(log.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="mt-3 text-right">
+            <button onClick={() => navigate('/admin/audit-log')} className="text-xs text-[var(--accent)] hover:underline">Lihat selengkapnya →</button>
+          </div>
         </div>
       </div>
 
-      {/* System Info */}
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[var(--border)] p-6">
         <h2 className="font-[var(--font-heading)] text-base font-bold text-[var(--text)] mb-4">System Info</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
