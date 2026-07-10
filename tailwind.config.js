@@ -5,7 +5,8 @@ export default {
     extend: {
       fontFamily: {
         heading: ['var(--font-heading)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'serif'],
+        body: ['var(--font-body)', 'sans-serif'],
       },
     },
   },

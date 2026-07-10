@@ -25,10 +25,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-dvh flex items-center justify-center overflow-hidden bg-[var(--bg)] px-4 py-8">
-      <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-subtle)] via-transparent to-[var(--accent-subtle)] opacity-60" />
-      <div className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full bg-[var(--accent-subtle)] opacity-20 blur-3xl" />
-      <div className="absolute -bottom-28 -left-28 w-[350px] h-[350px] rounded-full bg-[var(--accent-subtle)] opacity-20 blur-3xl" />
+    <div className="relative min-h-dvh flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#F7F5F0] via-white to-[#F0EDE4] px-4 py-8">
+      <div className="absolute inset-0 bg-pattern-dots opacity-[0.1] pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full opacity-[0.04] pointer-events-none"
+        style={{ background: 'radial-gradient(circle, var(--color-emerald) 0%, transparent 70%)' }}
+      />
+      <div className="absolute -bottom-28 -left-28 w-[350px] h-[350px] rounded-full opacity-[0.03] pointer-events-none"
+        style={{ background: 'radial-gradient(circle, var(--color-gold) 0%, transparent 70%)' }}
+      />
+      <div className="absolute top-0 left-0 right-0 verse-strip" />
 
       <div className="relative z-10 w-full max-w-sm">
         <div className="relative">

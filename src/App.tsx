@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './components/Toast'
@@ -13,6 +14,7 @@ import LandingPage from './pages/public/LandingPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import ApplicantDashboard from './pages/applicant/ApplicantDashboard'
 import ApplicantDocumentsPage from './pages/applicant/ApplicantDocumentsPage'
+import * as api from './api/client'
 
 const P = ({ title }: { title: string }) => (
   <div className="flex flex-col items-center justify-center py-20"><h1 className="text-xl font-semibold">{title}</h1><p className="text-gray-500 mt-2">Segera hadir.</p></div>
@@ -29,6 +31,22 @@ const applicantRoutes = [
 ].map(p => <Route key={p} path={p} element={<P title={p} />} />)
 
 export default function App() {
+  useEffect(() => {
+    const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement
+    fetch(`${api.API_BASE}/companyprofile/settings/favicon`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.value) {
+          if (link) link.href = data.value
+        } else if (link) {
+          link.href = '/download.png'
+        }
+      })
+      .catch(() => {
+        if (link) link.href = '/download.png'
+      })
+  }, [])
+
   return (
     <BrowserRouter>
       <AuthProvider>

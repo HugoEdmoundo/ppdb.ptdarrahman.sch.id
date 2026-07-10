@@ -1,7 +1,7 @@
 const TOKEN_KEY = 'ppdb_token'
 const REFRESH_KEY = 'ppdb_refresh'
 const USER_KEY = 'ppdb_user'
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 let refreshPromise: Promise<string | null> | null = null
 
