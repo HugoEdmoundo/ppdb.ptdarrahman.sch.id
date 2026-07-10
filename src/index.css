@@ -35,11 +35,7 @@
   --warning-subtle: #fffbeb;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: var(--font-display);
@@ -49,52 +45,32 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* Sidebar nav scrollbar */
 .sidebar-nav::-webkit-scrollbar { width: 4px; }
 .sidebar-nav::-webkit-scrollbar-thumb { background: transparent; }
 .sidebar-nav:hover::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-/* Modal scroll overrides (hide scrollbars) */
 .modal-scroll::-webkit-scrollbar { width: 0; height: 0; }
 .modal-scroll { scrollbar-width: none; }
 
-/* Hide scrollbars completely in modals/dialogs */
-[role="dialog"], 
-[role="dialog"] *,
-.fixed.inset-0.overflow-y-auto {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-[role="dialog"]::-webkit-scrollbar, 
-[role="dialog"] *::-webkit-scrollbar,
-.fixed.inset-0.overflow-y-auto::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  display: none !important;
-}
-
-/* Animations */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-.animate-fadeIn { animation: fadeIn 0.2s ease-out; }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.95) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
 
-/* Input field */
+.animate-fadeIn { animation: fadeIn 0.2s ease-out; }
+.animate-scaleIn { animation: scaleIn 0.2s ease-out; }
+.animate-slideInLeft { animation: slideInLeft 0.2s ease-out; }
+.animate-slideUp { animation: slideUp 0.2s ease-out; }
+.animate-toastIn { animation: toastIn 0.3s ease-out; }
+
 .input-field {
   @apply w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-white text-sm text-[var(--text)] outline-none transition-all;
 }
-.input-field:focus {
-  @apply border-[var(--accent)] ring-2 ring-[var(--accent-subtle)];
-}
-.input-field:disabled {
-  @apply bg-gray-50 text-gray-400 cursor-not-allowed;
-}
-
-/* Toast */
-@keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
-@keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+.input-field:focus { @apply border-[var(--accent)] ring-2 ring-[var(--accent-subtle)]; }
+.input-field:disabled { @apply bg-gray-50 text-gray-400 cursor-not-allowed; }
