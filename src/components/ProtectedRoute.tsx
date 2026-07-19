@@ -1,10 +1,9 @@
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-
-const ADMIN_ROLES = ['superadmin', 'admin_ppdb', 'admin_keuangan', 'penguji']
+import { useAuth, usePermission } from '../contexts/AuthContext'
 
 export default function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: 'admin' | 'applicant' }) {
   const { user, loading } = useAuth()
+  const { isAdmin, hasApplicantAccess } = usePermission()
 
   if (loading) {
     return (
@@ -18,14 +17,17 @@ export default function ProtectedRoute({ children, role }: { children: React.Rea
     return <Navigate to="/auth/login" replace />
   }
 
-  const isAdmin = ADMIN_ROLES.includes(user.user_type || '')
+  const userIsAdmin = isAdmin()
+  const userIsApplicant = hasApplicantAccess()
 
-  if (role === 'admin' && !isAdmin) {
-    return <Navigate to="/applicant" replace />
+  if (role === 'admin' && !userIsAdmin) {
+    if (userIsApplicant) return <Navigate to="/applicant" replace />
+    return <Navigate to="/auth/login" replace />
   }
 
-  if (role === 'applicant' && isAdmin) {
-    return <Navigate to="/admin" replace />
+  if (role === 'applicant' && !userIsApplicant) {
+    if (userIsAdmin) return <Navigate to="/admin" replace />
+    return <Navigate to="/auth/login" replace />
   }
 
   return <>{children}</>

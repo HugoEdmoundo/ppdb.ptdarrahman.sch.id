@@ -1,8 +1,8 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import * as api from '../api/client'
 
 export interface AuthUser {
-  id: string; username: string; email: string; full_name: string; role_id: string; user_type: string; is_active: boolean
+  id: string; username: string; email: string; full_name: string; role_id: string; role_name?: string; user_type: string; is_active: boolean
   permissions: Record<string, string>
   is_superadmin: boolean
   page_permissions: string[]
@@ -27,6 +27,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (stored && api.getToken()) { setUser(stored); api.getMe().then(setUser).catch(() => setUser(null)).finally(() => setLoading(false)) }
     else setLoading(false)
   }, [])
+
+  // Auto-refresh user permissions every 30 seconds to handle dynamic permission changes or account deactivation
+  useEffect(() => {
+    if (!user) return
+    const interval = setInterval(() => {
+      api.getMe().then(setUser).catch(() => {
+        api.clearAuth()
+        setUser(null)
+      })
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [user?.id]) // only re-run if user id changes
 
   const loginFn = useCallback(async (username: string, password: string) => { const u = await api.login(username, password); setUser(u) }, [])
   const logoutFn = useCallback(async () => { await api.logout(); setUser(null) }, [])
@@ -53,42 +65,52 @@ export function usePermission() {
       const modules = ['ppdb', 'payment', 'selection', 'notification', 'dashboard']
       return modules.some(m => (user.permissions?.[m] || 'none') !== 'none')
     },
+    hasApplicantAccess: () => {
+      if (!user) return false
+      if (user.user_type === 'applicant') return true
+      if (user.is_superadmin) return true
+      return (user.permissions?.['applicant_dashboard'] || 'none') !== 'none'
+    },
     pagePermissions: user?.page_permissions || [],
     permissions: user?.permissions || {},
     isSuperadmin: user?.is_superadmin || false,
   }
 }
 
-const PPDB_MODULES = ['ppdb', 'payment', 'selection', 'notification', 'dashboard']
-const PUBLIC_PREFIXES = ['/auth', '/', '/403', '/404']
-
 export function useFilteredNav(items: { label: string; href?: string; module?: string; minLevel?: 'dashboard' | 'read' | 'crud'; roles?: string[]; children?: { label: string; href: string; module?: string; minLevel?: 'dashboard' | 'read' | 'crud' }[] }[]) {
   const { user } = useAuth()
   const { permissions, isSuperadmin, pagePermissions } = usePermission()
 
-  if (!user) return items
+  return useMemo(() => {
+    if (!user) return items
 
-  return items.filter(item => {
-    if (item.roles && !item.roles.includes(user.user_type) && !isSuperadmin) return false
+    return items.reduce((acc, item) => {
+      // Check role access
+      if (item.roles && !item.roles.includes(user.user_type) && !isSuperadmin) return acc
 
-    if (item.module) {
-      const minLevel = item.minLevel || 'dashboard'
-      const perm = permissions[item.module] || 'none'
-      const levels: Record<string, number> = { none: 0, dashboard: 1, read: 2, crud: 3 }
-      if ((levels[perm] || 0) < levels[minLevel]) return false
-    }
+      // Check module permission
+      if (item.module && !isSuperadmin) {
+        const minLevel = item.minLevel || 'dashboard'
+        const perm = permissions[item.module] || 'none'
+        const levels: Record<string, number> = { none: 0, dashboard: 1, read: 2, crud: 3 }
+        if ((levels[perm] || 0) < levels[minLevel]) return acc
+      }
 
-    if (item.children) {
-      const filteredChildren = item.children.filter(c => {
-        if (pagePermissions.length > 0) {
-          const pageKey = c.href.replace('/admin/', '')
-          if (!pagePermissions.includes(pageKey)) return false
-        }
-        return true
-      })
-      if (filteredChildren.length === 0) return false
-    }
+      // Filter children based on page_permissions
+      let filteredItem = { ...item }
+      if (item.children) {
+        filteredItem.children = item.children.filter(c => {
+          if (!isSuperadmin && pagePermissions.length > 0) {
+            const pageKey = c.href.replace('/admin/', '')
+            if (!pagePermissions.includes(pageKey)) return false
+          }
+          return true
+        })
+        if (filteredItem.children.length === 0) return acc
+      }
 
-    return true
-  })
+      acc.push(filteredItem)
+      return acc
+    }, [] as typeof items)
+  }, [items, user, permissions, isSuperadmin, pagePermissions])
 }

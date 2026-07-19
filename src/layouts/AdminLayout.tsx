@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth, useFilteredNav } from '../contexts/AuthContext'
 import {
   LayoutDashboard, Settings, Users, GraduationCap, CreditCard, FileText,
   BarChart3, ChevronDown, ChevronLeft, Menu, LogOut, Bell,
@@ -9,16 +9,33 @@ import { settingsService } from '../services/index'
 import { API_BASE } from '../api/client'
 
 const navItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-  { label: 'Konfigurasi PPDB', icon: Settings, roles: ['superadmin'], children: [
-    { label: 'Periode & Gelombang', href: '/admin/periods' }, { label: 'Jenjang, Kategori & Alur', href: '/admin/levels' }, { label: 'Konfigurasi Gelombang', href: '/admin/wave-configs' },
+  { label: 'Dashboard', icon: LayoutDashboard, href: '/admin', module: 'dashboard' },
+  { label: 'Konfigurasi PPDB', icon: Settings, module: 'ppdb', minLevel: 'crud' as const, children: [
+    { label: 'Periode & Gelombang', href: '/admin/periods' }, 
+    { label: 'Jenjang, Kategori & Alur', href: '/admin/levels' }, 
+    { label: 'Konfigurasi Gelombang', href: '/admin/wave-configs' },
   ]},
-  { label: 'Pendaftar', icon: Users, children: [{ label: 'Daftar', href: '/admin/applicants' }, { label: 'Verifikasi Dokumen', href: '/admin/documents' }] },
-  { label: 'Seleksi', icon: GraduationCap, children: [{ label: 'Jadwal Tes', href: '/admin/test-sessions' }, { label: 'Nilai', href: '/admin/test-scores' }, { label: 'Kelulusan', href: '/admin/graduations' }] },
-  { label: 'Keuangan', icon: CreditCard, roles: ['superadmin', 'admin_keuangan'], children: [{ label: 'Pembayaran', href: '/admin/payments' }, { label: 'Invoice', href: '/admin/invoices' }, { label: 'Diskon', href: '/admin/discounts' }] },
-  { label: 'Post-Seleksi', icon: FileText, children: [{ label: 'MOU', href: '/admin/mou' }, { label: 'Daftar Ulang', href: '/admin/re-registrations' }, { label: 'MPLS', href: '/admin/mpls' }] },
-  { label: 'Laporan', icon: BarChart3, href: '/admin/reports' },
-  { label: 'Notifikasi', icon: Bell, href: '/admin/notifications' },
+  { label: 'Pendaftar', icon: Users, module: 'ppdb', children: [
+    { label: 'Daftar', href: '/admin/applicants' }, 
+    { label: 'Verifikasi Dokumen', href: '/admin/documents' }
+  ]},
+  { label: 'Seleksi', icon: GraduationCap, module: 'selection', children: [
+    { label: 'Jadwal Tes', href: '/admin/test-sessions' }, 
+    { label: 'Nilai', href: '/admin/test-scores' }, 
+    { label: 'Kelulusan', href: '/admin/graduations' }
+  ]},
+  { label: 'Keuangan', icon: CreditCard, module: 'payment', children: [
+    { label: 'Pembayaran', href: '/admin/payments' }, 
+    { label: 'Invoice', href: '/admin/invoices' }, 
+    { label: 'Diskon', href: '/admin/discounts' }
+  ]},
+  { label: 'Post-Seleksi', icon: FileText, module: 'ppdb', children: [
+    { label: 'MOU', href: '/admin/mou' }, 
+    { label: 'Daftar Ulang', href: '/admin/re-registrations' }, 
+    { label: 'MPLS', href: '/admin/mpls' }
+  ]},
+  { label: 'Laporan', icon: BarChart3, module: 'ppdb', href: '/admin/reports' },
+  { label: 'Notifikasi', icon: Bell, module: 'notification', href: '/admin/notifications' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -30,6 +47,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [profileOpen, setProfileOpen] = useState(false)
   const [logoUrl, setLogoUrl] = useState('/download.png')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+
+  const filtered = useFilteredNav(navItems as any)
 
   useEffect(() => {
     const loadLogo = () => {
@@ -61,16 +80,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => { setMobileOpen(false) }, [location.pathname])
 
-  // Auto-expand parent yang child-nya active
+  // Auto-expand parent yang child-nya active (hanya jalan saat pindah halaman)
   useEffect(() => {
-    const updates: Record<string, boolean> = {}
-    filtered.forEach(item => {
-      if (item.children) {
-        updates[item.label] = !!item.children.some(c => location.pathname.startsWith(c.href))
-      }
+    setExpanded(prev => {
+      const next = { ...prev }
+      let changed = false
+      filtered.forEach((item: any) => {
+        if (item.children && item.children.some((c: any) => location.pathname.startsWith(c.href))) {
+          if (!next[item.label]) {
+            next[item.label] = true
+            changed = true
+          }
+        }
+      })
+      return changed ? next : prev
     })
-    setExpanded(prev => ({ ...prev, ...updates }))
-  }, [location.pathname])
+  }, [location.pathname]) // Hanya re-run ketika path berubah
 
   async function handleLogout() {
     await logout()
@@ -84,8 +109,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   function toggleExpand(label: string) {
     setExpanded(prev => ({ ...prev, [label]: !prev[label] }))
   }
-
-  const filtered = navItems.filter(i => !i.roles || i.roles.includes(user?.user_type || ''))
 
   function isActive(item: typeof navItems[number]): boolean {
     if (item.href) return location.pathname === item.href || location.pathname.startsWith(item.href + '/')
@@ -128,7 +151,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Nav */}
         <nav className="sidebar-nav flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-          {filtered.map((item) => {
+          {filtered.map((item: any) => {
             const Icon = item.icon
             const active = isActive(item)
             if (item.children) {
@@ -156,7 +179,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </button>
                   {!collapsed && isExpanded && (
                     <div className="ml-8 mt-0.5 space-y-0.5">
-                      {item.children.map(c => (
+                      {item.children.map((c: any) => (
                         <NavLink
                           key={c.href}
                           to={c.href}
@@ -224,7 +247,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
                 <div className="hidden sm:block text-left">
                   <div className="text-sm font-semibold text-[var(--text)] leading-tight">{user?.full_name || user?.username}</div>
-                  <div className="text-[11px] text-[var(--text-muted)]">Admin</div>
+                  <div className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide">{user?.role_name || user?.user_type}</div>
                 </div>
               </button>
 

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth, usePermission } from '../../contexts/AuthContext'
 import { useToast } from '../../components/Toast'
-import { ShieldCheck, Eye, EyeOff } from 'lucide-react'
+import { ShieldCheck, Eye, EyeOff, LayoutDashboard, User } from 'lucide-react'
 
 export default function LoginPage() {
-  const { login, user } = useAuth()
+  const { login, user, logout } = useAuth()
+  const { isAdmin, hasApplicantAccess } = usePermission()
   const { toast } = useToast()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
@@ -14,8 +15,25 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => { if (user) { const dest = ['superadmin', 'admin_ppdb', 'admin_keuangan', 'penguji'].includes(user.user_type) ? '/admin' : '/applicant'; navigate(dest, { replace: true }) } }, [user, navigate])
-  if (user) return null
+  const canAdmin = isAdmin()
+  const canApplicant = hasApplicantAccess()
+  const canChoose = canAdmin && canApplicant
+
+  useEffect(() => { 
+    if (user) {
+      if (canChoose) {
+        // Do nothing, let user choose from the UI below
+      } else if (canAdmin) {
+        navigate('/admin', { replace: true })
+      } else if (canApplicant) {
+        navigate('/applicant', { replace: true })
+      } else {
+        // No permission to any PPDB module or dashboard
+        setError('Akses ditolak: Anda tidak memiliki izin untuk modul PPDB.')
+        logout()
+      }
+    } 
+  }, [user, navigate, canAdmin, canApplicant, canChoose, logout])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setError(''); setLoading(true)
@@ -26,7 +44,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-dvh flex items-center justify-center overflow-hidden bg-[var(--bg)] px-4 py-8">
-      {/* Gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-subtle)] via-transparent to-[var(--accent-subtle)] opacity-60" />
       <div className="absolute -top-24 -right-24 w-[300px] h-[300px] rounded-full bg-[var(--accent-subtle)] opacity-20 blur-3xl" />
       <div className="absolute -bottom-28 -left-28 w-[350px] h-[350px] rounded-full bg-[var(--accent-subtle)] opacity-20 blur-3xl" />
@@ -43,10 +60,10 @@ export default function LoginPage() {
             </div>
 
             <h1 className="font-[var(--font-display)] text-2xl font-bold text-[var(--text)] mb-1">
-              Login PPDB
+              {user && canChoose ? 'Pilih Dashboard' : 'Login PPDB'}
             </h1>
             <p className="text-xs text-[var(--text-muted)] mb-6">
-              PPDB Ar-Rahman
+              {user && canChoose ? `Selamat datang, ${user.full_name || user.username}` : 'PPDB Ar-Rahman'}
             </p>
 
             {error && (
@@ -55,63 +72,84 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="text-left">
-                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="input-field"
-                  placeholder="Masukkan username"
-                  required
-                  autoFocus
-                  autoComplete="username"
-                />
+            {user && canChoose ? (
+              <div className="space-y-4">
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-[var(--accent)] text-white font-semibold text-sm hover:bg-[var(--accent-hover)] shadow-md hover:shadow-lg transition-all"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                  Masuk Admin Dashboard
+                </button>
+                <button
+                  onClick={() => navigate('/applicant')}
+                  className="w-full flex items-center justify-center gap-3 py-3 rounded-xl bg-white border border-[var(--accent)] text-[var(--accent)] font-semibold text-sm hover:bg-[var(--accent-subtle)] shadow-sm transition-all"
+                >
+                  <User className="w-5 h-5" />
+                  Masuk Dashboard Peserta
+                </button>
               </div>
+            ) : !user ? (
+              <>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="text-left">
+                    <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="input-field"
+                      placeholder="Masukkan username"
+                      required
+                      autoFocus
+                      autoComplete="username"
+                    />
+                  </div>
 
-              <div className="text-left">
-                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPw ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="input-field pr-10"
-                    placeholder="Masukkan password"
-                    required
-                    autoComplete="current-password"
-                  />
+                  <div className="text-left">
+                    <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPw ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="input-field pr-10"
+                        placeholder="Masukkan password"
+                        required
+                        autoComplete="current-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPw(!showPw)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
                   <button
-                    type="button"
-                    onClick={() => setShowPw(!showPw)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
-                    tabIndex={-1}
+                    type="submit"
+                    disabled={loading || !username.trim() || !password.trim()}
+                    className="w-full py-3 rounded-xl bg-[var(--accent)] text-white font-semibold text-sm hover:bg-[var(--accent-hover)] shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98]"
                   >
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {loading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Memproses...
+                      </span>
+                    ) : 'Masuk'}
                   </button>
-                </div>
-              </div>
+                </form>
 
-              <button
-                type="submit"
-                disabled={loading || !username.trim() || !password.trim()}
-                className="w-full py-3 rounded-xl bg-[var(--accent)] text-white font-semibold text-sm hover:bg-[var(--accent-hover)] shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98]"
-              >
-                {loading ? (
-                  <span className="inline-flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Memproses...
-                  </span>
-                ) : 'Masuk'}
-              </button>
-            </form>
-
-            <p className="mt-4 text-xs text-[var(--text-muted)]">Belum punya akun? <Link to="/auth/register" className="text-[var(--accent)] font-semibold hover:underline">Daftar</Link></p>
+                <p className="mt-4 text-xs text-[var(--text-muted)]">Belum punya akun? <Link to="/auth/register" className="text-[var(--accent)] font-semibold hover:underline">Daftar</Link></p>
+              </>
+            ) : null}
           </div>
         </div>
       </div>

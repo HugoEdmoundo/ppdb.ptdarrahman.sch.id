@@ -1,35 +1,17 @@
-import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import {
-  BarChart3, User, FileText, CreditCard, Calendar, GraduationCap,
-  FileDown, ClipboardList, ChevronLeft, Menu, LogOut, Users, Clock, Bell,
-} from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth, usePermission } from '../contexts/AuthContext'
+import { LogOut, LayoutDashboard } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { settingsService } from '../services/index'
 import { API_BASE } from '../api/client'
 
-const NAV_ITEMS = [
-  { to: '/applicant', icon: BarChart3, label: 'Dashboard' },
-  { to: '/applicant/profile', icon: User, label: 'Profil' },
-  { to: '/applicant/parents', icon: Users, label: 'Orang Tua' },
-  { to: '/applicant/history', icon: Clock, label: 'Riwayat' },
-  { to: '/applicant/documents', icon: FileText, label: 'Dokumen' },
-  { to: '/applicant/payments', icon: CreditCard, label: 'Pembayaran' },
-  { to: '/applicant/tests', icon: Calendar, label: 'Tes' },
-  { to: '/applicant/results', icon: GraduationCap, label: 'Hasil' },
-  { to: '/applicant/mou', icon: FileDown, label: 'MOU' },
-  { to: '/applicant/notifications', icon: Bell, label: 'Notifikasi' },
-  { to: '/applicant/re-registration', icon: ClipboardList, label: 'Daftar Ulang' },
-]
-
 export default function ApplicantLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth()
+  const { isAdmin } = usePermission()
   const navigate = useNavigate()
-  const location = useLocation()
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('applicant_collapsed') === 'true')
-  const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [logoUrl, setLogoUrl] = useState('/download.png')
+  const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const loadLogo = () => {
@@ -49,7 +31,6 @@ export default function ApplicantLayout({ children }: { children: React.ReactNod
     es.addEventListener('change', () => loadLogo())
     return () => es.close()
   }, [])
-  const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -59,136 +40,72 @@ export default function ApplicantLayout({ children }: { children: React.ReactNod
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  useEffect(() => { setMobileOpen(false) }, [location.pathname])
-
   async function handleLogout() {
     await logout()
     navigate('/auth/login')
   }
 
-  const toggleCollapse = () => {
-    setCollapsed(p => { const v = !p; localStorage.setItem('applicant_collapsed', String(v)); return v })
-  }
-
   return (
-    <div className="min-h-dvh bg-[var(--bg)] flex">
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-30 bg-black/30 md:hidden" onClick={() => setMobileOpen(false)} />
-      )}
+    <div className="min-h-dvh bg-[var(--bg)] flex flex-col">
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-20 bg-white/70 backdrop-blur-xl border-b border-[var(--border)]">
+        <div className="flex items-center justify-between px-4 md:px-6 h-14 max-w-5xl mx-auto w-full">
+          <div className="flex items-center gap-3">
+            <img src={logoUrl} alt="PTDARRAHMAN" className="w-8 h-8 object-contain shrink-0" />
+            <h1 className="font-[var(--font-heading)] text-base font-bold text-[var(--text)] hidden sm:block">
+              {isAdmin() ? 'Reviewer PPDB' : 'Portal Peserta PPDB'}
+            </h1>
+          </div>
 
-      {/* ── Sidebar ── */}
-      <aside
-        className={`fixed md:sticky top-0 left-0 z-40 h-dvh bg-white/80 backdrop-blur-xl border-r border-[var(--border)] flex flex-col transition-all duration-300 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        } ${collapsed ? 'w-16' : 'w-60'}`}
-      >
-        {/* Header */}
-        <div className={`flex items-center border-b border-[var(--border)] relative ${collapsed ? 'justify-center px-2 py-3' : 'px-5 py-4'}`}>
-          {collapsed ? (
-            <img src={logoUrl} alt="PPDB" className="w-9 h-9 object-contain" />
-          ) : (
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <img src={logoUrl} alt="PTDARRAHMAN" className="w-9 h-9 object-contain shrink-0" />
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-[var(--text)] truncate font-[var(--font-heading)]">PTDARRAHMAN</div>
-                <div className="text-[11px] text-[var(--text-muted)]">PPDB Pendaftar</div>
+          {/* Profile dropdown */}
+          <div className="relative" ref={profileRef}>
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-[var(--accent-subtle)] transition-all"
+            >
+              <div className="w-8 h-8 rounded-full bg-[var(--accent-subtle)] flex items-center justify-center text-sm font-bold text-[var(--accent)]">
+                {user?.full_name?.[0] || user?.username?.[0] || 'U'}
               </div>
-            </div>
-          )}
-          <button
-            onClick={toggleCollapse}
-            className="hidden md:flex items-center justify-center w-6 h-6 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--accent-subtle)] transition-all absolute -right-3 top-1/2 -translate-y-1/2 bg-white border border-[var(--border)] shadow-sm"
-          >
-            <ChevronLeft className={`w-3.5 h-3.5 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
-          </button>
+              <div className="hidden sm:block text-left">
+                <div className="text-sm font-semibold text-[var(--text)] leading-tight">{user?.full_name || user?.username}</div>
+                <div className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide">{user?.role_name || user?.user_type}</div>
+              </div>
+            </button>
+
+            {profileOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white/90 backdrop-blur-xl border border-[var(--border)] rounded-xl shadow-xl overflow-hidden animate-fadeIn">
+                <div className="px-4 py-3 border-b border-[var(--border)]">
+                  <p className="text-sm font-semibold text-[var(--text)]">{user?.full_name || user?.username}</p>
+                  <p className="text-xs text-[var(--text-muted)]">{user?.email}</p>
+                </div>
+                <div className="py-1">
+                  {isAdmin() && (
+                    <button
+                      onClick={() => navigate('/admin')}
+                      className="w-full px-4 py-2 text-left text-sm text-[var(--text)] hover:bg-[var(--accent-subtle)] transition-all"
+                    >
+                      <LayoutDashboard className="w-4 h-4 inline mr-2" />
+                      Kembali ke Admin
+                    </button>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 transition-all"
+                  >
+                    <LogOut className="w-4 h-4 inline mr-2" />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Nav */}
-        <nav className="sidebar-nav flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon
-            const isActive = item.to === '/applicant' ? location.pathname === '/applicant' : location.pathname.startsWith(item.to)
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={`flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 ${
-                  collapsed ? 'justify-center p-2' : 'px-3 py-2.5'
-                } ${
-                  isActive
-                    ? 'bg-[var(--accent-subtle)] text-[var(--accent)] shadow-sm'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--accent-subtle)] hover:text-[var(--text)]'
-                }`}
-                title={collapsed ? item.label : undefined}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </NavLink>
-            )
-          })}
-        </nav>
-
-      </aside>
+      </header>
 
       {/* ── Main Area ── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="sticky top-0 z-20 bg-white/70 backdrop-blur-xl border-b border-[var(--border)]">
-          <div className="flex items-center justify-between px-4 md:px-6 h-14">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setMobileOpen(true)}
-                className="md:hidden p-2 -ml-2 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--accent-subtle)] transition-all"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-              <h1 className="font-[var(--font-heading)] text-base font-bold text-[var(--text)] hidden sm:block">
-                Pendaftar PPDB
-              </h1>
-            </div>
-
-            {/* Profile dropdown */}
-            <div className="relative" ref={profileRef}>
-              <button
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-[var(--accent-subtle)] transition-all"
-              >
-                <div className="w-8 h-8 rounded-full bg-[var(--accent-subtle)] flex items-center justify-center text-sm font-bold text-[var(--accent)]">
-                  {user?.full_name?.[0] || user?.username?.[0] || 'U'}
-                </div>
-                <div className="hidden sm:block text-left">
-                  <div className="text-sm font-semibold text-[var(--text)] leading-tight">{user?.full_name || user?.username}</div>
-                  <div className="text-[11px] text-[var(--text-muted)]">Pendaftar</div>
-                </div>
-              </button>
-
-              {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white/90 backdrop-blur-xl border border-[var(--border)] rounded-xl shadow-xl overflow-hidden animate-fadeIn">
-                  <div className="px-4 py-3 border-b border-[var(--border)]">
-                    <p className="text-sm font-semibold text-[var(--text)]">{user?.full_name || user?.username}</p>
-                    <p className="text-xs text-[var(--text-muted)]">{user?.email}</p>
-                  </div>
-                  <div className="py-1">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 transition-all"
-                    >
-                      <LogOut className="w-4 h-4 inline mr-2" />
-                      Logout
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* Content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
-          {children}
-        </main>
-      </div>
+      <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto w-full max-w-4xl mx-auto">
+        {children}
+      </main>
     </div>
   )
 }

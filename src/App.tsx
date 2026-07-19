@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './components/Toast'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -69,7 +69,7 @@ export default function App() {
               <Route path="register" element={<PublicRegisterPage />} />
             </Route>
 
-            <Route path="/admin/*" element={<ProtectedRoute role="admin"><AdminLayout><Routes>
+            <Route path="/admin" element={<ProtectedRoute role="admin"><AdminLayout><Outlet /></AdminLayout></ProtectedRoute>}>
               <Route index element={<AdminDashboardPage />} />
               <Route path="periods" element={<PeriodsPage />} />
               <Route path="levels" element={<LevelsPage />} />
@@ -90,9 +90,9 @@ export default function App() {
               <Route path="mpls" element={<AdminPostPage />} />
               <Route path="calendar" element={<AdminNotificationsPage />} />
               {placeholderAdmin}
-            </Routes></AdminLayout></ProtectedRoute>} />
+            </Route>
 
-            <Route path="/applicant/*" element={<ProtectedRoute role="applicant"><ApplicantLayout><Routes>
+            <Route path="/applicant" element={<ProtectedRoute role="applicant"><ApplicantLayout><Outlet /></ApplicantLayout></ProtectedRoute>}>
               <Route index element={<ApplicantDashboard />} />
               <Route path="documents" element={<ApplicantDocumentsPage />} />
               <Route path="profile" element={<ApplicantProfilePage />} />
@@ -105,7 +105,7 @@ export default function App() {
               <Route path="re-registration" element={<ApplicantPostPage />} />
               <Route path="results" element={<ApplicantTestsPage />} />
               {placeholderApplicant}
-            </Routes></ApplicantLayout></ProtectedRoute>} />
+            </Route>
 
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="*" element={<NotFoundPage />} />
