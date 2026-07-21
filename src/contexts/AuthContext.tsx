@@ -101,12 +101,17 @@ export function useFilteredNav(items: { label: string; href?: string; module?: s
       if (item.children) {
         filteredItem.children = item.children.filter(c => {
           if (!isSuperadmin && pagePermissions.length > 0) {
-            const pageKey = c.href.replace('/admin/', '')
+            const pageKey = c.href.replace('/admin/', '') || ''
             if (!pagePermissions.includes(pageKey)) return false
           }
           return true
         })
         if (filteredItem.children.length === 0) return acc
+      } else {
+        if (!isSuperadmin && pagePermissions.length > 0 && item.href) {
+          const pageKey = item.href.replace('/admin', '').replace(/^\//, '') || ''
+          if (pageKey && !pagePermissions.includes(pageKey)) return acc
+        }
       }
 
       acc.push(filteredItem)
