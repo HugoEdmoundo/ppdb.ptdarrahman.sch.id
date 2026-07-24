@@ -36,8 +36,14 @@ export default function AdminApplicantsPage() {
   const { toast } = useToast()
   const PER_PAGE = 20
 
-  useEffect(() => { ppdbService.getAllPeriods().then(setPeriods).catch(() => {}) }, [])
-  useEffect(() => { load() }, [page, filterPeriod])
+  useEffect(() => {
+    ppdbService.getAllPeriods().then(res => {
+      setPeriods(res)
+      const active = res.find((p: any) => p.status === 'active')
+      if (active) setFilterPeriod(active.id)
+    }).catch(() => {})
+  }, [])
+  useEffect(() => { if (periods.length > 0 || filterPeriod === '') load() }, [page, filterPeriod, periods.length])
 
   async function load() {
     setLoading(true)
