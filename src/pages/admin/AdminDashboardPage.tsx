@@ -34,9 +34,21 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      <div>
-        <h1 className="font-[var(--font-heading)] text-2xl font-bold text-[var(--text)]">Dashboard</h1>
-        <p className="text-sm text-[var(--text-muted)] mt-1">Ringkasan data PPDB</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="font-[var(--font-heading)] text-2xl font-bold text-[var(--text)]">Dashboard</h1>
+          <p className="text-sm text-[var(--text-muted)] mt-1">Ringkasan data PPDB</p>
+        </div>
+        {!loading && (
+          <div className="bg-white/60 px-4 py-2 rounded-xl border border-[var(--border)] shadow-sm flex items-center gap-2">
+            <span className="text-xs text-[var(--text-muted)] font-medium">Periode Aktif:</span>
+            {stats?.active_period_name ? (
+              <span className="text-sm font-bold text-[var(--accent)]">{stats.active_period_name}</span>
+            ) : (
+              <span className="text-sm font-bold text-red-500">Belum ada periode aktif</span>
+            )}
+          </div>
+        )}
       </div>
 
       {loading ? (
