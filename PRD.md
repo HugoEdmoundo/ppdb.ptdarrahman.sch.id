@@ -259,7 +259,7 @@ Digunakan Superadmin untuk mengatur seluruh konfigurasi PPDB.
 
 Fitur:
 
-* Manajemen periode
+* Manajemen periode (Hanya ada 1 Periode Aktif pada satu waktu. Saat admin mengaktifkan periode, periode sebelumnya akan otomatis tertutup, dan seluruh tampilan data di Dashboard & tabel Admin akan otomatis hanya menampilkan data yang terikat dengan periode aktif tersebut).
 * Manajemen gelombang
 * Manajemen jenjang
 * Manajemen kategori
@@ -460,6 +460,8 @@ Digunakan untuk:
 # 10. Dashboard Requirements
 
 ## Superadmin
+
+(Semua data di dashboard akan difilter secara default berdasarkan **Periode Aktif**)
 
 * Total Pendaftar
 * Total Lulus

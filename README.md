@@ -1,3 +1,31 @@
+# PPDB Frontend Application
+
+Sistem Frontend untuk Penerimaan Peserta Didik Baru (PPDB) Terintegrasi. Aplikasi ini dibangun dengan React, TypeScript, dan Vite.
+
+## Fitur Utama
+
+- **Dashboard Admin**: Ringkasan data pendaftar, dokumen, dan keuangan. 
+  *(Catatan: Semua data yang ditampilkan secara default dikunci berdasarkan "Periode Aktif" yang saat ini sedang berlangsung).*
+- **Manajemen Pendaftar**: Daftar seluruh pendaftar, difilter berdasarkan gelombang dan periode aktif.
+- **Verifikasi Dokumen**: Antrean dokumen pendaftar yang siap di-review oleh admin.
+- **Manajemen Pembayaran**: Daftar invoice dan transaksi pembayaran.
+
+## Struktur Direktori
+
+- `src/pages`: Berisi seluruh halaman aplikasi (Admin dan User).
+- `src/components`: Komponen antarmuka yang dapat digunakan kembali (UI library).
+- `src/services`: Modul untuk berkomunikasi dengan Backend API.
+- `src/api`: Konfigurasi client axios untuk fetching data.
+
+## Konsep "Periode Aktif"
+
+Sistem ini mendukung pengelolaan multiple periode (misal: Tahun Ajaran 2026/2027, 2027/2028, dst).
+- Hanya boleh ada **1 Periode Aktif** pada satu waktu.
+- Seluruh tampilan daftar (Applicants, Invoices, Documents, Waves) pada dashboard Admin secara otomatis hanya akan menarik dan menampilkan data dari Periode yang sedang Aktif.
+- Jika pengguna ingin melihat riwayat periode sebelumnya, mereka dapat memilih "Semua Periode" atau periode tertentu melalui filter dropdown di halaman tersebut.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
