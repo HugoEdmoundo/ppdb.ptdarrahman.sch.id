@@ -46,6 +46,7 @@
 # 2. PERIODE PPDB
 
 ### ppdb_periods
+*(Catatan: Sistem didesain agar hanya ada maksimal 1 periode dengan status = 'active' pada satu waktu. Saat sebuah periode diaktifkan, periode lain otomatis non-aktif. Data di Dashboard dan tabel-tabel utama secara default akan merujuk pada periode yang berstatus 'active' ini).*
 
 | Field      |
 | ---------- |
